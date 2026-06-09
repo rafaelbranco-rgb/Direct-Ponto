@@ -1,4 +1,5 @@
 import { StyleSheet, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Brand } from '@/constants/brand';
 
@@ -11,11 +12,11 @@ type Props = {
 export function SearchBar({ value, onChangeText, placeholder = 'Buscar' }: Props) {
   return (
     <View style={styles.wrapper}>
-      {/* lupa em texto para não depender de pacote de ícones nesta v1 */}
+      <Ionicons name="search" size={18} color={Brand.searchPlaceholder} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder={`🔎  ${placeholder}`}
+        placeholder={placeholder}
         placeholderTextColor={Brand.searchPlaceholder}
         style={styles.input}
         returnKeyType="search"
@@ -27,11 +28,15 @@ export function SearchBar({ value, onChangeText, placeholder = 'Buscar' }: Props
 
 const styles = StyleSheet.create({
   wrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: Brand.searchBg,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
   input: {
+    flex: 1,
     height: 42,
     color: Brand.onPrimary,
     fontSize: 16,

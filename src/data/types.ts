@@ -21,7 +21,8 @@ export type CategoriaCodigo =
 export interface Categoria {
   codigo: CategoriaCodigo;
   label: string;
-  emoji: string;
+  /** Nome do ícone Ionicons (ex.: "time-outline"). */
+  icone: string;
   descricao: string;
   /** Se true, o fluxo desta categoria espera anexo (ex.: atestado). */
   exigeAnexo?: boolean;

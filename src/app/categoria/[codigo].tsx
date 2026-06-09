@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
+import { GlassSurface } from '@/components/glass';
+import { ScreenBackground } from '@/components/screen-bg';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Brand } from '@/constants/brand';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -72,12 +74,10 @@ export default function ChatCategoria() {
     return `x-${seq.current}`;
   }
 
-  // Persiste no store (para a prévia na caixa de entrada).
   useEffect(() => {
     salvarConversa({ categoria: cod, remetente: conversaInicial.remetente, triada, mensagens });
   }, [mensagens, triada]);
 
-  // Inicia a triagem se for um assunto novo (sem mensagens).
   useEffect(() => {
     if (iniciado.current) return;
     iniciado.current = true;
@@ -104,7 +104,7 @@ export default function ChatCategoria() {
 
   function finalizarTriagem() {
     addSistema(`Protocolo ${novoProtocolo()} — Atendimento solicitado`, dataHoraAgora());
-    addAtendente('Recebemos sua solicitação ✅. Em breve um responsável dará retorno por aqui.');
+    addAtendente('Recebemos sua solicitação. Em breve um responsável dará retorno por aqui.');
     setTriada(true);
   }
 
@@ -113,7 +113,7 @@ export default function ChatCategoria() {
     addColaborador(textoResp ?? '', anexo);
 
     if (passo.tipo === 'anexo' && !anexo) {
-      addAtendente('Para esta etapa, use o 📎 abaixo para anexar o arquivo.');
+      addAtendente('Para esta etapa, use o botão de anexar (clipe) abaixo.');
       return;
     }
     if (passo.tipo === 'texto' && !textoResp) return;
@@ -197,15 +197,28 @@ export default function ChatCategoria() {
             styles.balao,
             ehColaborador
               ? { backgroundColor: Brand.primary, borderBottomRightRadius: 4 }
-              : { backgroundColor: theme.backgroundElement, borderBottomLeftRadius: 4 },
+              : {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.backgroundSelected,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderBottomLeftRadius: 4,
+                },
           ]}>
           {item.anexo &&
             (item.anexo.ehImagem && item.anexo.uri ? (
               <Image source={{ uri: item.anexo.uri }} style={styles.anexoImg} contentFit="cover" />
             ) : (
-              <Text style={[styles.anexoArq, { color: ehColaborador ? Brand.onPrimary : theme.text }]}>
-                📄 {item.anexo.nome}
-              </Text>
+              <View style={styles.anexoArq}>
+                <Ionicons
+                  name="document-outline"
+                  size={18}
+                  color={ehColaborador ? Brand.onPrimary : theme.text}
+                />
+                <Text
+                  style={[styles.anexoArqTxt, { color: ehColaborador ? Brand.onPrimary : theme.text }]}>
+                  {item.anexo.nome}
+                </Text>
+              </View>
             ))}
           {!!item.texto && (
             <Text style={[styles.balaoTexto, { color: ehColaborador ? Brand.onPrimary : theme.text }]}>
@@ -220,7 +233,7 @@ export default function ChatCategoria() {
               ]}>
               {item.horario}
             </Text>
-            {ehColaborador && <Text style={styles.check}>✓✓</Text>}
+            {ehColaborador && <Ionicons name="checkmark-done" size={14} color="#8BE9C0" />}
           </View>
         </View>
       </View>
@@ -228,26 +241,31 @@ export default function ChatCategoria() {
   }
 
   return (
-    <ThemedView style={styles.screen}>
-      {/* Cabeçalho */}
-      <View style={styles.header}>
+    <View style={styles.screen}>
+      <ScreenBackground />
+
+      {/* Cabeçalho de vidro */}
+      <GlassSurface marca intensidade={50} style={styles.header}>
         <SafeAreaView edges={['top']}>
           <View style={styles.headerContent}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
-              <Text style={styles.backText}>‹</Text>
+            <Pressable onPress={() => router.back()} hitSlop={12}>
+              <Ionicons name="chevron-back" size={28} color={Brand.onPrimary} />
             </Pressable>
-            <Text style={styles.titleEmoji}>{categoria?.emoji ?? '📋'}</Text>
+            <Ionicons
+              name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
+              size={22}
+              color={Brand.onPrimary}
+            />
             <Text style={styles.titleText} numberOfLines={1}>
               {categoria?.label ?? 'Atendimento'}
             </Text>
           </View>
         </SafeAreaView>
-      </View>
+      </GlassSurface>
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <FlatList
           ref={listaRef}
           data={mensagens}
@@ -260,50 +278,62 @@ export default function ChatCategoria() {
 
         {/* Menu de anexo */}
         {menuAnexo && (
-          <View style={[styles.menuAnexo, { borderTopColor: theme.backgroundElement }]}>
-            <BotaoAnexo emoji="📷" texto="Câmera" onPress={tirarFoto} />
-            <BotaoAnexo emoji="🖼️" texto="Galeria" onPress={escolherGaleria} />
-            <BotaoAnexo emoji="📄" texto="PDF" onPress={anexarPdf} />
+          <View style={styles.menuWrap}>
+            <GlassSurface style={styles.menuAnexo}>
+              <BotaoAnexo icone="camera-outline" texto="Câmera" onPress={tirarFoto} />
+              <BotaoAnexo icone="images-outline" texto="Galeria" onPress={escolherGaleria} />
+              <BotaoAnexo icone="document-outline" texto="PDF" onPress={anexarPdf} />
+            </GlassSurface>
           </View>
         )}
 
-        {/* Composer */}
-        <View style={[styles.composer, { borderTopColor: theme.backgroundElement }]}>
-          <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
-            <Text style={styles.clipEmoji}>📎</Text>
-          </Pressable>
-          <TextInput
-            value={texto}
-            onChangeText={setTexto}
-            placeholder="Mensagem"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { color: theme.text }]}
-            multiline
-            onSubmitEditing={enviar}
-          />
-          <Pressable
-            onPress={enviar}
-            disabled={!texto.trim()}
-            style={[styles.enviar, { backgroundColor: Brand.primary, opacity: texto.trim() ? 1 : 0.4 }]}>
-            <Text style={styles.enviarSeta}>➤</Text>
-          </Pressable>
+        {/* Composer de vidro */}
+        <View style={styles.composerWrap}>
+          <GlassSurface intensidade={40} style={styles.composer}>
+            <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
+              <Ionicons name="attach" size={24} color={theme.textSecondary} />
+            </Pressable>
+            <TextInput
+              value={texto}
+              onChangeText={setTexto}
+              placeholder="Mensagem"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.text }]}
+              multiline
+              onSubmitEditing={enviar}
+            />
+            <Pressable
+              onPress={enviar}
+              disabled={!texto.trim()}
+              style={[styles.enviar, { backgroundColor: Brand.primary, opacity: texto.trim() ? 1 : 0.4 }]}>
+              <Ionicons name="send" size={18} color={Brand.onPrimary} />
+            </Pressable>
+          </GlassSurface>
         </View>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </View>
   );
 }
 
-function BotaoAnexo({ emoji, texto, onPress }: { emoji: string; texto: string; onPress: () => void }) {
+function BotaoAnexo({
+  icone,
+  texto,
+  onPress,
+}: {
+  icone: keyof typeof Ionicons.glyphMap;
+  texto: string;
+  onPress: () => void;
+}) {
   const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.botaoAnexo,
-        { borderColor: theme.backgroundElement },
+        { borderColor: theme.backgroundSelected },
         pressed && { backgroundColor: theme.backgroundElement },
       ]}>
-      <Text style={styles.botaoAnexoEmoji}>{emoji}</Text>
+      <Ionicons name={icone} size={22} color={Brand.primary} />
       <ThemedText type="small">{texto}</ThemedText>
     </Pressable>
   );
@@ -312,7 +342,15 @@ function BotaoAnexo({ emoji, texto, onPress }: { emoji: string; texto: string; o
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   flex: { flex: 1 },
-  header: { backgroundColor: Brand.primary },
+  header: {
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -323,9 +361,6 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  back: { paddingRight: Spacing.one },
-  backText: { color: Brand.onPrimary, fontSize: 34, lineHeight: 34, fontWeight: '300' },
-  titleEmoji: { fontSize: 22 },
   titleText: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700', flex: 1 },
 
   lista: {
@@ -351,50 +386,48 @@ const styles = StyleSheet.create({
   balaoTexto: { fontSize: 16, lineHeight: 22 },
   balaoRodape: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
   hora: { fontSize: 11 },
-  check: { fontSize: 11, color: '#8BE9C0' },
   anexoImg: { width: 180, height: 180, borderRadius: 10 },
-  anexoArq: { fontSize: 15, fontWeight: '600' },
+  anexoArq: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  anexoArqTxt: { fontSize: 15, fontWeight: '600' },
 
+  menuWrap: { paddingHorizontal: Spacing.three, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
   menuAnexo: {
     flexDirection: 'row',
     gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    padding: Spacing.two,
+    marginBottom: Spacing.two,
   },
   botaoAnexo: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingVertical: Spacing.two,
     alignItems: 'center',
     gap: 2,
   },
-  botaoAnexoEmoji: { fontSize: 20 },
 
-  composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.two,
+  composerWrap: {
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingBottom: Spacing.three,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  clip: { paddingBottom: 8 },
-  clipEmoji: { fontSize: 22 },
+  composer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: 28,
+  },
+  clip: { paddingBottom: 8, paddingLeft: 4 },
   input: {
     flex: 1,
     fontSize: 16,
     maxHeight: 120,
     minHeight: 40,
     paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.two,
   },
   enviar: {
     width: 40,
@@ -403,5 +436,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  enviarSeta: { color: Brand.onPrimary, fontSize: 16, fontWeight: '700' },
 });

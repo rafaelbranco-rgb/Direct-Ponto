@@ -6,41 +6,41 @@ import type { Categoria, CategoriaCodigo, Solicitacao } from './types';
  */
 
 export const CATEGORIAS: Categoria[] = [
-  { codigo: 'ATRASO', label: 'Atraso', emoji: '⏰', descricao: 'Cheguei depois do horário' },
-  { codigo: 'FALTA', label: 'Falta', emoji: '🚫', descricao: 'Não compareci ao trabalho' },
+  { codigo: 'ATRASO', label: 'Atraso', icone: 'time-outline', descricao: 'Cheguei depois do horário' },
+  { codigo: 'FALTA', label: 'Falta', icone: 'close-circle-outline', descricao: 'Não compareci ao trabalho' },
   {
     codigo: 'ENTRADA_ANTECIPADA',
     label: 'Entrada Antecipada',
-    emoji: '🌅',
+    icone: 'sunny-outline',
     descricao: 'Iniciei antes do horário',
   },
   {
     codigo: 'ATESTADO',
     label: 'Envio de Atestado',
-    emoji: '📄',
+    icone: 'document-text-outline',
     descricao: 'Atestado médico / declaração',
     exigeAnexo: true,
   },
-  { codigo: 'SAIDA_TARDIA', label: 'Saída Tardia', emoji: '🌙', descricao: 'Saí depois do horário' },
+  { codigo: 'SAIDA_TARDIA', label: 'Saída Tardia', icone: 'moon-outline', descricao: 'Saí depois do horário' },
   {
     codigo: 'SAIDA_ANTECIPADA',
     label: 'Saída Antecipada',
-    emoji: '🌆',
+    icone: 'exit-outline',
     descricao: 'Saí antes do horário',
   },
   {
     codigo: 'ESQUECIMENTO',
     label: 'Esquecimento',
-    emoji: '❓',
+    icone: 'help-circle-outline',
     descricao: 'Esqueci de bater o ponto',
   },
   {
     codigo: 'SAIDA_EXPEDIENTE',
     label: 'Saída Durante o Expediente',
-    emoji: '🚪',
+    icone: 'walk-outline',
     descricao: 'Precisei sair no meio do expediente',
   },
-  { codigo: 'BANCO_HORAS', label: 'Banco de Horas', emoji: '🕒', descricao: 'Compensação de horas' },
+  { codigo: 'BANCO_HORAS', label: 'Banco de Horas', icone: 'hourglass-outline', descricao: 'Compensação de horas' },
 ];
 
 export const SOLICITACOES: Solicitacao[] = [

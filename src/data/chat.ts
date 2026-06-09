@@ -123,7 +123,7 @@ export function passosTriagem(codigo: CategoriaCodigo): PassoTriagem[] {
   };
   const anexo: PassoTriagem = {
     chave: 'anexo',
-    pergunta: 'Por favor, anexe o atestado/comprovante tocando no 📎 abaixo.',
+    pergunta: 'Por favor, anexe o atestado/comprovante tocando no ícone de clipe (anexar) abaixo.',
     tipo: 'anexo',
   };
 

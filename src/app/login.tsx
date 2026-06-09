@@ -9,14 +9,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
+import { GlassSurface } from '@/components/glass';
+import { ThemedText } from '@/components/themed-text';
 import { Brand } from '@/constants/brand';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/auth';
 
 export default function Login() {
   const router = useRouter();
+  const theme = useTheme();
   const { entrar } = useAuth();
 
   const [identificador, setIdentificador] = useState('');
@@ -33,8 +38,19 @@ export default function Login() {
     router.replace('/');
   }
 
+  const inputStyle = [
+    styles.input,
+    { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: 'rgba(127,127,127,0.10)' },
+  ];
+
   return (
     <View style={styles.screen}>
+      <LinearGradient
+        colors={[Brand.primary, Brand.primaryDark]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
       <SafeAreaView style={styles.flex}>
         <KeyboardAvoidingView
           style={styles.flex}
@@ -49,12 +65,16 @@ export default function Login() {
               <Text style={styles.tagline}>{Brand.tagline}</Text>
             </View>
 
-            {/* Card de login */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Acessar minha conta</Text>
+            {/* Card de login (vidro) */}
+            <GlassSurface intensidade={50} style={styles.card}>
+              <ThemedText type="subtitle" style={styles.cardTitle}>
+                Acessar minha conta
+              </ThemedText>
 
               <View style={styles.campo}>
-                <Text style={styles.label}>CPF ou matrícula</Text>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  CPF ou matrícula
+                </ThemedText>
                 <TextInput
                   value={identificador}
                   onChangeText={(t) => {
@@ -62,15 +82,17 @@ export default function Login() {
                     setErro('');
                   }}
                   placeholder="Ex.: 000.000.000-00 ou 12345"
-                  placeholderTextColor="#9AA0A6"
+                  placeholderTextColor={theme.textSecondary}
                   keyboardType="numbers-and-punctuation"
                   autoCapitalize="none"
-                  style={styles.input}
+                  style={inputStyle}
                 />
               </View>
 
               <View style={styles.campo}>
-                <Text style={styles.label}>Senha</Text>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  Senha
+                </ThemedText>
                 <TextInput
                   value={senha}
                   onChangeText={(t) => {
@@ -78,9 +100,9 @@ export default function Login() {
                     setErro('');
                   }}
                   placeholder="Sua senha"
-                  placeholderTextColor="#9AA0A6"
+                  placeholderTextColor={theme.textSecondary}
                   secureTextEntry
-                  style={styles.input}
+                  style={inputStyle}
                   onSubmitEditing={fazerLogin}
                 />
               </View>
@@ -96,7 +118,7 @@ export default function Login() {
               <Pressable hitSlop={8}>
                 <Text style={styles.link}>Esqueci minha senha</Text>
               </Pressable>
-            </View>
+            </GlassSurface>
 
             <Text style={styles.footer}>{Brand.company} • uso interno</Text>
           </View>
@@ -107,7 +129,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Brand.primary },
+  screen: { flex: 1 },
   flex: { flex: 1 },
   container: {
     flex: 1,
@@ -130,31 +152,18 @@ const styles = StyleSheet.create({
   logoText: { color: Brand.primary, fontWeight: '800', fontSize: 36 },
   appName: { color: Brand.onPrimary, fontSize: 30, fontWeight: '800' },
   tagline: { color: Brand.onPrimary, opacity: 0.9, fontSize: 15 },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: Spacing.four,
-    gap: Spacing.three,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
-  cardTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: Spacing.one },
+  card: { padding: Spacing.four, gap: Spacing.three },
+  cardTitle: { fontSize: 22, marginBottom: Spacing.one },
   campo: { gap: Spacing.one },
-  label: { fontSize: 13, fontWeight: '600', color: '#5F6368' },
   input: {
     borderWidth: 1,
-    borderColor: '#DADCE0',
     borderRadius: 10,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 16,
-    color: '#1A1A1A',
     minHeight: 48,
   },
-  erro: { color: '#C0341D', fontSize: 13 },
+  erro: { color: '#FFD7D2', fontSize: 13, fontWeight: '600' },
   botao: {
     backgroundColor: Brand.primary,
     borderRadius: 999,

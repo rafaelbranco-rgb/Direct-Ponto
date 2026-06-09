@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
+import { Brand } from '@/constants/brand';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Categoria } from '@/data/types';
@@ -9,7 +11,6 @@ type Props = {
   categoria: Categoria;
   previewTexto: string;
   previewHora?: string;
-  /** Em branco/itálico quando ainda não há mensagens. */
   vazio?: boolean;
   onPress: () => void;
 };
@@ -22,11 +23,11 @@ export function CategoryRow({ categoria, previewTexto, previewHora, vazio, onPre
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
-        { borderBottomColor: theme.backgroundElement },
-        pressed && { backgroundColor: theme.backgroundElement },
+        { borderBottomColor: theme.backgroundSelected },
+        pressed && { backgroundColor: theme.backgroundSelected },
       ]}>
-      <View style={[styles.avatar, { backgroundColor: theme.backgroundElement }]}>
-        <Text style={styles.emoji}>{categoria.emoji}</Text>
+      <View style={styles.avatar}>
+        <Ionicons name={categoria.icone as keyof typeof Ionicons.glyphMap} size={24} color={Brand.primary} />
       </View>
 
       <View style={styles.middle}>
@@ -61,13 +62,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(32,138,239,0.12)',
   },
-  emoji: { fontSize: 24 },
   middle: { flex: 1, gap: 2 },
   vazio: { fontStyle: 'italic' },
 });

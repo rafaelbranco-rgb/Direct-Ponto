@@ -1,26 +1,34 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider } from '@/context/auth';
+import { ThemePrefProvider } from '@/context/theme-pref';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+function Conteudo() {
+  const esquema = useColorScheme();
+  return (
+    <ThemeProvider value={esquema === 'dark' ? DarkTheme : DefaultTheme}>
+      <AnimatedSplashOverlay />
+      {/* Header próprio (com a marca) é renderizado dentro de cada tela. */}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+        <Stack.Screen name="login" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="categoria/[codigo]" />
+      </Stack>
+    </ThemeProvider>
+  );
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AnimatedSplashOverlay />
-          {/* Header próprio (com a marca) é renderizado dentro de cada tela. */}
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="login" />
-            <Stack.Screen name="index" />
-            <Stack.Screen name="categoria/[codigo]" />
-          </Stack>
-        </ThemeProvider>
-      </AuthProvider>
+      <ThemePrefProvider>
+        <AuthProvider>
+          <Conteudo />
+        </AuthProvider>
+      </ThemePrefProvider>
     </SafeAreaProvider>
   );
 }
