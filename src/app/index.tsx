@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 
+import { BrandHeader } from '@/components/brand-header';
 import { CategoryRow } from '@/components/category-row';
 import { GlassSurface } from '@/components/glass';
 import { ScreenBackground } from '@/components/screen-bg';
@@ -40,33 +40,27 @@ export default function CaixaDeEntrada() {
     <View style={styles.screen}>
       <ScreenBackground />
 
-      {/* Cabeçalho de vidro com a marca */}
-      <GlassSurface marca intensidade={50} style={styles.header}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.headerContent}>
-            <View style={styles.topRow}>
-              <Text style={styles.greeting} numberOfLines={1}>
-                Olá, {usuario.identificador}
-              </Text>
-              <Pressable onPress={() => setDrawer(true)} hitSlop={10}>
-                <Ionicons name="settings-outline" size={24} color={Brand.onPrimary} />
-              </Pressable>
-            </View>
-            <View style={styles.brandRow}>
-              <View style={styles.logo}>
-                <Text style={styles.logoText}>{Brand.company[0]}</Text>
-              </View>
-              <View>
-                <Text style={styles.appName}>{Brand.appName}</Text>
-                <Text style={styles.tagline}>{Brand.tagline}</Text>
-              </View>
-            </View>
-            <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar categoria" />
+      <BrandHeader>
+        <View style={styles.topRow}>
+          <Text style={styles.greeting} numberOfLines={1}>
+            Olá, {usuario.identificador}
+          </Text>
+          <Pressable onPress={() => setDrawer(true)} hitSlop={10}>
+            <Ionicons name="settings-outline" size={22} color={Brand.onPrimary} />
+          </Pressable>
+        </View>
+        <View style={styles.brandRow}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>{Brand.company[0]}</Text>
           </View>
-        </SafeAreaView>
-      </GlassSurface>
+          <View>
+            <Text style={styles.appName}>{Brand.appName}</Text>
+            <Text style={styles.tagline}>{Brand.tagline}</Text>
+          </View>
+        </View>
+        <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar categoria" />
+      </BrandHeader>
 
-      {/* Lista de assuntos em cartão de vidro */}
       <View style={styles.corpo}>
         <GlassSurface style={styles.cartao}>
           <FlatList
@@ -106,24 +100,6 @@ export default function CaixaDeEntrada() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    borderTopWidth: 0,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  headerContent: {
-    paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.three,
-    paddingTop: Spacing.two,
-    gap: Spacing.three,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-  },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
@@ -135,7 +111,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: { color: Brand.primary, fontWeight: '800', fontSize: 20 },
+  logoText: { color: Brand.accent, fontWeight: '800', fontSize: 22 },
   appName: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700' },
   tagline: { color: Brand.onPrimary, opacity: 0.85, fontSize: 13 },
 

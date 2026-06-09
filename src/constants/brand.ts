@@ -1,20 +1,25 @@
 /**
- * Identidade visual do "Contato".
- * TODO: substituir pelos valores oficiais da AIONS (cores e logo) quando o
- * setor de design liberar o manual de marca. Hoje uso o azul do splash.
+ * Identidade visual da CONTATO (Serviços de Conservação e Manutenção).
+ * Cores extraídas da logo oficial: azul royal + dourado.
  */
 export const Brand = {
   appName: 'Contato',
-  company: 'AIONS',
+  company: 'Contato',
+  companyFull: 'Serviços de Conservação e Manutenção',
   tagline: 'Justificativa de Ponto',
 
-  primary: '#208AEF',
-  primaryDark: '#0B5BC0',
+  // Azul da logo
+  primary: '#234FA0',
+  primaryDark: '#173A75',
   onPrimary: '#FFFFFF',
 
+  // Dourado da logo (acento)
+  accent: '#E1A22C',
+  accentDark: '#C2861A',
+
   // sutil para divisórias e fundos de busca sobre o header
-  searchBg: 'rgba(255,255,255,0.18)',
-  searchPlaceholder: 'rgba(255,255,255,0.75)',
+  searchBg: 'rgba(255,255,255,0.20)',
+  searchPlaceholder: 'rgba(255,255,255,0.80)',
 } as const;
 
 /**

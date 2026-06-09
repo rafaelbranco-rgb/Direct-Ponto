@@ -9,13 +9,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
+import { BrandHeader } from '@/components/brand-header';
 import { GlassSurface } from '@/components/glass';
 import { ScreenBackground } from '@/components/screen-bg';
 import { ThemedText } from '@/components/themed-text';
@@ -244,24 +244,21 @@ export default function ChatCategoria() {
     <View style={styles.screen}>
       <ScreenBackground />
 
-      {/* Cabeçalho de vidro */}
-      <GlassSurface marca intensidade={50} style={styles.header}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.headerContent}>
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Ionicons name="chevron-back" size={28} color={Brand.onPrimary} />
-            </Pressable>
-            <Ionicons
-              name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
-              size={22}
-              color={Brand.onPrimary}
-            />
-            <Text style={styles.titleText} numberOfLines={1}>
-              {categoria?.label ?? 'Atendimento'}
-            </Text>
-          </View>
-        </SafeAreaView>
-      </GlassSurface>
+      <BrandHeader>
+        <View style={styles.headerRow}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Ionicons name="chevron-back" size={26} color={Brand.onPrimary} />
+          </Pressable>
+          <Ionicons
+            name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
+            size={22}
+            color={Brand.onPrimary}
+          />
+          <Text style={styles.titleText} numberOfLines={1}>
+            {categoria?.label ?? 'Atendimento'}
+          </Text>
+        </View>
+      </BrandHeader>
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -289,9 +286,9 @@ export default function ChatCategoria() {
 
         {/* Composer de vidro */}
         <View style={styles.composerWrap}>
-          <GlassSurface intensidade={40} style={styles.composer}>
+          <GlassSurface style={styles.composer}>
             <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
-              <Ionicons name="attach" size={24} color={theme.textSecondary} />
+              <Ionicons name="attach" size={22} color={theme.textSecondary} />
             </Pressable>
             <TextInput
               value={texto}
@@ -342,25 +339,7 @@ function BotaoAnexo({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   flex: { flex: 1 },
-  header: {
-    borderTopWidth: 0,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   titleText: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700', flex: 1 },
 
   lista: {

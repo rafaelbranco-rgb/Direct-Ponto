@@ -66,7 +66,7 @@ export default function Login() {
             </View>
 
             {/* Card de login (vidro) */}
-            <GlassSurface intensidade={50} style={styles.card}>
+            <GlassSurface forte style={styles.card}>
               <ThemedText type="subtitle" style={styles.cardTitle}>
                 Acessar minha conta
               </ThemedText>
@@ -120,7 +120,7 @@ export default function Login() {
               </Pressable>
             </GlassSurface>
 
-            <Text style={styles.footer}>{Brand.company} • uso interno</Text>
+            <Text style={styles.footer}>{Brand.companyFull} • uso interno</Text>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: { color: Brand.primary, fontWeight: '800', fontSize: 36 },
+  logoText: { color: Brand.accent, fontWeight: '800', fontSize: 38 },
   appName: { color: Brand.onPrimary, fontSize: 30, fontWeight: '800' },
   tagline: { color: Brand.onPrimary, opacity: 0.9, fontSize: 15 },
   card: { padding: Spacing.four, gap: Spacing.three },

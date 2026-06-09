@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(32,138,239,0.12)',
+    backgroundColor: 'rgba(35,79,160,0.10)',
   },
   middle: { flex: 1, gap: 2 },
   vazio: { fontStyle: 'italic' },

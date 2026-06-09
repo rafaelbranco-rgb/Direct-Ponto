@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -35,17 +36,18 @@ export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFech
   const tx = useRef(new Animated.Value(-largura)).current;
   const op = useRef(new Animated.Value(0)).current;
 
+  const nativo = Platform.OS !== 'web';
   useEffect(() => {
     if (visivel) {
       setMontado(true);
       Animated.parallel([
-        Animated.timing(tx, { toValue: 0, duration: 240, useNativeDriver: true }),
-        Animated.timing(op, { toValue: 1, duration: 240, useNativeDriver: true }),
+        Animated.timing(tx, { toValue: 0, duration: 240, useNativeDriver: nativo }),
+        Animated.timing(op, { toValue: 1, duration: 240, useNativeDriver: nativo }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(tx, { toValue: -largura, duration: 220, useNativeDriver: true }),
-        Animated.timing(op, { toValue: 0, duration: 220, useNativeDriver: true }),
+        Animated.timing(tx, { toValue: -largura, duration: 220, useNativeDriver: nativo }),
+        Animated.timing(op, { toValue: 0, duration: 220, useNativeDriver: nativo }),
       ]).start(({ finished }) => finished && setMontado(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,7 +56,7 @@ export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFech
   if (!montado) return null;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'box-none' }]}>
       {/* Backdrop */}
       <Animated.View style={[styles.backdrop, { opacity: op }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={aoFechar} />
@@ -63,7 +65,7 @@ export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFech
       {/* Painel de vidro */}
       <Animated.View
         style={[styles.painel, { width: largura, transform: [{ translateX: tx }] }]}>
-        <GlassSurface intensidade={40} style={styles.glass}>
+        <GlassSurface forte style={styles.glass}>
           <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
             <View style={styles.conteudo}>
               <View style={styles.cabecalho}>
@@ -121,7 +123,7 @@ export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFech
               </Pressable>
 
               <ThemedText type="small" themeColor="textSecondary" style={styles.rodape}>
-                {Brand.appName} • {Brand.company} • v1.0
+                {Brand.appName} • v1.0
               </ThemedText>
             </View>
           </SafeAreaView>

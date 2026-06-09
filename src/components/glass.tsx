@@ -1,34 +1,34 @@
-import { BlurView } from 'expo-blur';
-import { StyleSheet, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { Vidro, VidroMarca } from '@/constants/glass';
+import { Vidro } from '@/constants/glass';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type Props = {
   children?: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
-  /** Intensidade do desfoque (0–100). */
-  intensidade?: number;
-  /** Usa a tintura da marca (azul) em vez da neutra. */
-  marca?: boolean;
+  /** Mais opaco (melhor legibilidade sobre fundos saturados). */
+  forte?: boolean;
 };
 
-/** Superfície de vidro (liquid glass): desfoque + tintura translúcida + borda fina. */
-export function GlassSurface({ children, style, intensidade = 28, marca = false }: Props) {
-  const esquema = useColorScheme();
-  const v = marca ? VidroMarca[esquema] : Vidro[esquema];
+// Desfoque real no navegador (no nativo a translucidez já dá o efeito de vidro).
+const blurWeb =
+  Platform.OS === 'web'
+    ? ({ backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)' } as unknown as ViewStyle)
+    : null;
 
+/** Superfície de vidro (liquid glass): translúcida, borda fina e sombra suave. */
+export function GlassSurface({ children, style, forte = false }: Props) {
+  const v = Vidro[useColorScheme()];
   return (
-    <BlurView
-      intensity={intensidade}
-      tint={v.tint}
+    <View
       style={[
         styles.base,
-        { backgroundColor: v.overlay, borderColor: v.border },
+        { backgroundColor: forte ? v.overlayForte : v.overlay, borderColor: v.border },
+        blurWeb,
         style,
       ]}>
       {children}
-    </BlurView>
+    </View>
   );
 }
 
@@ -37,5 +37,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+    ...Platform.select({
+      web: { boxShadow: '0 8px 24px rgba(0,0,0,0.10)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 3,
+      },
+    }),
   },
 });
