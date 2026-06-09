@@ -1,98 +1,137 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { CategoryRow } from '@/components/category-row';
+import { SearchBar } from '@/components/search-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Brand } from '@/constants/brand';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth';
+import { CATEGORIAS } from '@/data/mock';
+import { ultimaMensagem } from '@/data/chat';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+export default function CaixaDeEntrada() {
+  const router = useRouter();
+  const { usuario, sair } = useAuth();
+  const [busca, setBusca] = useState('');
+  const [, setTick] = useState(0);
+
+  // Atualiza as prévias ao voltar de uma conversa.
+  useFocusEffect(useCallback(() => setTick((t) => t + 1), []));
+
+  // Sem usuário autenticado → vai para o login.
+  if (!usuario) return <Redirect href="/login" />;
+
+  const categorias = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return CATEGORIAS;
+    return CATEGORIAS.filter(
+      (c) =>
+        c.label.toLowerCase().includes(termo) || c.descricao.toLowerCase().includes(termo),
     );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+  }, [busca]);
 
-export default function HomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+    <ThemedView style={styles.screen}>
+      {/* Cabeçalho com a marca da empresa + busca (estilo caixa de entrada) */}
+      <View style={styles.header}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.headerContent}>
+            <View style={styles.topRow}>
+              <Text style={styles.greeting} numberOfLines={1}>
+                Olá 👋 {usuario.identificador}
+              </Text>
+              <Pressable onPress={sair} hitSlop={8}>
+                <Text style={styles.sair}>Sair</Text>
+              </Pressable>
+            </View>
+            <View style={styles.brandRow}>
+              <View style={styles.logo}>
+                <Text style={styles.logoText}>{Brand.company[0]}</Text>
+              </View>
+              <View>
+                <Text style={styles.appName}>{Brand.appName}</Text>
+                <Text style={styles.tagline}>{Brand.tagline}</Text>
+              </View>
+            </View>
+            <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar categoria" />
+          </View>
+        </SafeAreaView>
+      </View>
+
+      <FlatList
+        data={categorias}
+        keyExtractor={(c) => c.codigo}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => {
+          const ultima = ultimaMensagem(item.codigo);
+          const previewTexto = ultima
+            ? ultima.texto || (ultima.anexo ? '📎 Anexo' : (ultima.data ?? ''))
+            : 'Toque para iniciar atendimento';
+          return (
+            <CategoryRow
+              categoria={item}
+              previewTexto={previewTexto}
+              previewHora={ultima?.horario}
+              vazio={!ultima}
+              onPress={() =>
+                router.push({ pathname: '/categoria/[codigo]', params: { codigo: item.codigo } })
+              }
+            />
+          );
+        }}
+        ListEmptyComponent={
+          <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+            Nenhuma categoria encontrada para “{busca}”.
           </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
+        }
+      />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  screen: { flex: 1 },
+  header: {
+    backgroundColor: Brand.primary,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
+  headerContent: {
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+    paddingBottom: Spacing.three,
+    paddingTop: Spacing.two,
+    gap: Spacing.three,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
   },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
+  sair: { color: Brand.onPrimary, fontSize: 14, fontWeight: '700', textDecorationLine: 'underline' },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: Brand.onPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: { color: Brand.primary, fontWeight: '800', fontSize: 20 },
+  appName: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700' },
+  tagline: { color: Brand.onPrimary, opacity: 0.85, fontSize: 13 },
+  list: { flex: 1, alignSelf: 'center', width: '100%', maxWidth: MaxContentWidth },
+  listContent: { paddingBottom: Spacing.five },
+  empty: { textAlign: 'center', marginTop: Spacing.five },
 });

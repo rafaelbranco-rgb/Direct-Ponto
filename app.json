@@ -26,6 +26,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Contato precisa acessar suas fotos para anexar comprovantes.",
+          "cameraPermission": "O Contato precisa da câmera para fotografar o atestado."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
