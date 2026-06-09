@@ -10,12 +10,6 @@ type Props = {
   forte?: boolean;
 };
 
-// Desfoque real no navegador (no nativo a translucidez já dá o efeito de vidro).
-const blurWeb =
-  Platform.OS === 'web'
-    ? ({ backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)' } as unknown as ViewStyle)
-    : null;
-
 /** Superfície de vidro (liquid glass): translúcida, borda fina e sombra suave. */
 export function GlassSurface({ children, style, forte = false }: Props) {
   const v = Vidro[useColorScheme()];
@@ -24,7 +18,6 @@ export function GlassSurface({ children, style, forte = false }: Props) {
       style={[
         styles.base,
         { backgroundColor: forte ? v.overlayForte : v.overlay, borderColor: v.border },
-        blurWeb,
         style,
       ]}>
       {children}
