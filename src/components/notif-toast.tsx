@@ -24,8 +24,8 @@ export function NotifToast() {
   if (!toast) return null;
 
   return (
-    <View style={styles.wrap} pointerEvents="box-none">
-      <SafeAreaView edges={['top']} pointerEvents="box-none">
+    <View style={styles.wrap}>
+      <SafeAreaView edges={['top']} style={styles.safe}>
         <Animated.View entering={SlideInUp.springify().damping(18)} exiting={FadeOutUp.duration(180)}>
           <Pressable
             style={styles.toast}
@@ -55,7 +55,16 @@ export function NotifToast() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', zIndex: 1000 },
+  wrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+    pointerEvents: 'box-none',
+  },
+  safe: { width: '100%', alignItems: 'center', pointerEvents: 'box-none' },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
