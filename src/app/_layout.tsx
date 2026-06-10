@@ -15,6 +15,7 @@ function Conteudo() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
         <Stack.Screen name="login" />
         <Stack.Screen name="index" />
+        <Stack.Screen name="pedidos" />
         <Stack.Screen name="categoria/[codigo]" />
       </Stack>
     </ThemeProvider>

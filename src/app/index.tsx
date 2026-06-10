@@ -47,9 +47,14 @@ export default function CaixaDeEntrada() {
           <Text style={styles.greeting} numberOfLines={1}>
             Olá, {usuario.identificador}
           </Text>
-          <Pressable onPress={() => setDrawer(true)} hitSlop={10}>
-            <Ionicons name="menu" size={26} color={Brand.onPrimary} />
-          </Pressable>
+          <View style={styles.acoes}>
+            <Pressable onPress={() => router.push('/pedidos')} hitSlop={10}>
+              <Ionicons name="document-text-outline" size={23} color={Brand.onPrimary} />
+            </Pressable>
+            <Pressable onPress={() => setDrawer(true)} hitSlop={10}>
+              <Ionicons name="menu" size={26} color={Brand.onPrimary} />
+            </Pressable>
+          </View>
         </View>
         <View style={styles.brandRow}>
           <Image
@@ -105,6 +110,7 @@ export default function CaixaDeEntrada() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  acoes: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   emblema: {
