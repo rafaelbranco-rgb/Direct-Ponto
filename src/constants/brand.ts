@@ -36,10 +36,23 @@ export const Brand = {
 /**
  * Cores dos status que o COLABORADOR enxerga. No backend o fluxo tem mais
  * estados (EM_ANALISE_GESTOR, APROVADA_DP, etc.), mas para o colaborador
- * colapsamos em três rótulos simples.
+ * colapsamos em três rótulos simples. Variantes por tema: no escuro usamos
+ * fundo tingido translúcido + texto vivo (pastel claro não combina com o navy).
  */
 export const StatusUI = {
-  PENDENTE: { bg: '#FFF3DC', fg: '#B7791F', label: 'Pendente' },
-  APROVADO: { bg: '#DFF6E6', fg: '#1A7F4B', label: 'Aprovado' },
-  RECUSADO: { bg: '#FDE3E3', fg: '#C0341D', label: 'Recusado' },
+  PENDENTE: {
+    label: 'Pendente',
+    light: { bg: '#FFF3DC', fg: '#B7791F' },
+    dark: { bg: 'rgba(225,162,44,0.18)', fg: '#F2C879' },
+  },
+  APROVADO: {
+    label: 'Aprovado',
+    light: { bg: '#DFF6E6', fg: '#1A7F4B' },
+    dark: { bg: 'rgba(52,190,130,0.18)', fg: '#6FE0A6' },
+  },
+  RECUSADO: {
+    label: 'Recusado',
+    light: { bg: '#FDE3E3', fg: '#C0341D' },
+    dark: { bg: 'rgba(224,90,80,0.20)', fg: '#FF9C8E' },
+  },
 } as const;

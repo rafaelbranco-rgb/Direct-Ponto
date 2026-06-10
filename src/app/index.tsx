@@ -12,7 +12,7 @@ import { SearchBar } from '@/components/search-bar';
 import { SettingsDrawer } from '@/components/settings-drawer';
 import { ThemedText } from '@/components/themed-text';
 import { Brand } from '@/constants/brand';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { CATEGORIAS } from '@/data/mock';
 import { ultimaMensagem } from '@/data/chat';
@@ -51,14 +51,13 @@ export default function CaixaDeEntrada() {
           </Pressable>
         </View>
         <View style={styles.brandRow}>
-          <View style={styles.logo}>
-            <Image
-              source={require('@/assets/images/logo-contato.png')}
-              style={styles.logoImg}
-              contentFit="contain"
-            />
-          </View>
-          <View>
+          <Image
+            source={require('@/assets/images/logo-contato.png')}
+            style={styles.emblema}
+            contentFit="contain"
+            tintColor={Brand.onPrimary}
+          />
+          <View style={styles.brandText}>
             <Text style={styles.appName}>{Brand.appName}</Text>
             <Text style={styles.tagline}>{Brand.tagline}</Text>
           </View>
@@ -108,18 +107,17 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: Brand.onPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 5,
+  emblema: { width: 46, height: 38, opacity: 0.96 },
+  brandText: { gap: 1 },
+  appName: {
+    color: Brand.onPrimary,
+    fontFamily: Fonts.brand,
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 4,
+    textTransform: 'uppercase',
   },
-  logoImg: { width: '100%', height: '100%' },
-  appName: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700' },
-  tagline: { color: Brand.onPrimary, opacity: 0.85, fontSize: 13 },
+  tagline: { color: 'rgba(255,255,255,0.82)', fontSize: 12.5, letterSpacing: 0.3 },
 
   corpo: {
     flex: 1,

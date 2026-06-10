@@ -14,6 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
+import { TiltCard } from '@/components/tilt-card';
+
 import { Brand } from '@/constants/brand';
 import { Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
@@ -92,7 +94,8 @@ export default function Login() {
               </Text>
             </View>
 
-            {/* Card de vidro */}
+            {/* Card de vidro (com tilt 3D sutil no web) */}
+            <TiltCard max={4}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Acesse sua conta</Text>
               <Text style={styles.cardSub}>
@@ -153,6 +156,7 @@ export default function Login() {
                 <Text style={styles.link}>Esqueci minha senha</Text>
               </Pressable>
             </View>
+            </TiltCard>
 
             <Text style={styles.footer}>{Brand.companyFull}</Text>
           </View>
