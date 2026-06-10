@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, {
+  Easing,
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -27,6 +27,8 @@ const TEMAS: { chave: Preferencia; label: string; icone: keyof typeof Ionicons.g
 
 type Vista = 'menu' | 'config';
 
+const EASING = Easing.bezier(0.2, 0.84, 0.2, 1);
+
 export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFechar: () => void }) {
   const { width } = useWindowDimensions();
   const largura = Math.min(330, width * 0.85);
@@ -34,38 +36,33 @@ export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFech
   const { preferencia, definir } = useThemePref();
   const { usuario, sair } = useAuth();
 
-  const [montado, setMontado] = useState(visivel);
   const [vista, setVista] = useState<Vista>('menu');
-  const tx = useRef(new Animated.Value(-largura)).current;
-  const op = useRef(new Animated.Value(0)).current;
+  const progresso = useSharedValue(0);
 
-  const nativo = Platform.OS !== 'web';
   useEffect(() => {
-    if (visivel) {
-      setMontado(true);
-      setVista('menu');
-      Animated.parallel([
-        Animated.timing(tx, { toValue: 0, duration: 240, useNativeDriver: nativo }),
-        Animated.timing(op, { toValue: 1, duration: 240, useNativeDriver: nativo }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(tx, { toValue: -largura, duration: 220, useNativeDriver: nativo }),
-        Animated.timing(op, { toValue: 0, duration: 220, useNativeDriver: nativo }),
-      ]).start(({ finished }) => finished && setMontado(false));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visivel, largura]);
+    progresso.value = withTiming(
+      visivel ? 1 : 0,
+      { duration: visivel ? 260 : 220, easing: EASING },
+      (fim) => {
+        // Ao terminar de fechar, reseta a subtela para a próxima abertura.
+        if (fim && !visivel) runOnJS(setVista)('menu');
+      },
+    );
+  }, [visivel, progresso]);
 
-  if (!montado) return null;
+  const estiloBackdrop = useAnimatedStyle(() => ({ opacity: progresso.value }));
+  const estiloPainel = useAnimatedStyle(
+    () => ({ transform: [{ translateX: interpolate(progresso.value, [0, 1], [-largura, 0]) }] }),
+    [largura],
+  );
 
   return (
-    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'box-none' }]}>
-      <Animated.View style={[styles.backdrop, { opacity: op }]}>
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: visivel ? 'auto' : 'none' }]}>
+      <Animated.View style={[styles.backdrop, estiloBackdrop]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={aoFechar} />
       </Animated.View>
 
-      <Animated.View style={[styles.painel, { width: largura, transform: [{ translateX: tx }] }]}>
+      <Animated.View style={[styles.painel, { width: largura }, estiloPainel]}>
         <GlassSurface forte style={styles.glass}>
           <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
             <View style={styles.conteudo}>

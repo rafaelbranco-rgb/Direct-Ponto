@@ -59,7 +59,21 @@ export default function ChatCategoria() {
   const conversaInicial = getConversa(cod, nomeColaborador);
   const passos = passosTriagem(cod);
 
-  const [mensagens, setMensagens] = useState<Mensagem[]>(conversaInicial.mensagens);
+  // Mensagem inicial da triagem é calculada já no estado inicial (sem setState
+  // dentro de efeito — exigência do React Compiler).
+  const [mensagens, setMensagens] = useState<Mensagem[]>(() => {
+    if (!conversaInicial.triada && conversaInicial.mensagens.length === 0 && passos.length > 0) {
+      return [
+        {
+          id: 'sys-bem-vindo',
+          autor: 'ATENDENTE',
+          texto: `Olá! Vou abrir seu atendimento de ${categoria?.label ?? 'ponto'}. ${passos[0].pergunta}`,
+          horario: agora(),
+        },
+      ];
+    }
+    return conversaInicial.mensagens;
+  });
   const [triada, setTriada] = useState(conversaInicial.triada);
   const [passoIdx, setPassoIdx] = useState(0);
   const [texto, setTexto] = useState('');
@@ -67,7 +81,6 @@ export default function ChatCategoria() {
 
   const seq = useRef(1000);
   const listaRef = useRef<FlatList<Mensagem>>(null);
-  const iniciado = useRef(false);
 
   function nid() {
     seq.current += 1;
@@ -76,23 +89,7 @@ export default function ChatCategoria() {
 
   useEffect(() => {
     salvarConversa({ categoria: cod, remetente: conversaInicial.remetente, triada, mensagens });
-  }, [mensagens, triada]);
-
-  useEffect(() => {
-    if (iniciado.current) return;
-    iniciado.current = true;
-    if (!conversaInicial.triada && conversaInicial.mensagens.length === 0 && passos.length > 0) {
-      setMensagens([
-        {
-          id: nid(),
-          autor: 'ATENDENTE',
-          texto: `Olá! Vou abrir seu atendimento de ${categoria?.label ?? 'ponto'}. ${passos[0].pergunta}`,
-          horario: agora(),
-        },
-      ]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cod, conversaInicial.remetente, mensagens, triada]);
 
   function add(m: Omit<Mensagem, 'id'>) {
     setMensagens((prev) => [...prev, { ...m, id: nid() }]);
