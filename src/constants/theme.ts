@@ -9,18 +9,20 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#13203A', // tinta navy (mais elegante que preto puro)
+    background: '#FFFFFF',
+    backgroundElement: '#EEF2F8',
+    backgroundSelected: '#DDE4EF',
+    textSecondary: '#5A6478',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    // Família navy derivada do azul da marca (#234FA0) — fundo escuro coeso,
+    // sem preto puro, para combinar com o header azul.
+    text: '#EEF3FB',
+    background: '#0B1220',
+    backgroundElement: '#16233A',
+    backgroundSelected: '#21324F',
+    textSecondary: '#9DB0CC',
   },
 } as const;
 

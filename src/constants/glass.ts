@@ -1,9 +1,9 @@
 import type { Esquema } from '@/context/theme-pref';
 
-/** Gradiente de fundo do app — suave, sem branco agressivo. */
+/** Gradiente de fundo do app — navy suave (mesma família do azul da marca). */
 export const Gradiente: Record<Esquema, [string, string, string]> = {
-  light: ['#E9EEF5', '#F1F4F9', '#E6ECF4'],
-  dark: ['#0B0F17', '#121826', '#0A0E16'],
+  light: ['#EAF0F8', '#F3F6FB', '#E6EDF6'],
+  dark: ['#0B1220', '#101B30', '#090F1B'],
 };
 
 /**
@@ -21,8 +21,8 @@ export const Vidro: Record<
     border: 'rgba(15,23,42,0.08)',
   },
   dark: {
-    overlay: 'rgba(28,33,44,0.55)',
-    overlayForte: 'rgba(20,24,32,0.90)',
-    border: 'rgba(255,255,255,0.10)',
+    overlay: 'rgba(28,42,68,0.55)',
+    overlayForte: 'rgba(18,29,49,0.92)',
+    border: 'rgba(150,176,220,0.16)',
   },
 };

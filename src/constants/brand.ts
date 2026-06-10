@@ -9,7 +9,7 @@ export const Brand = {
   tagline: 'Justificativa de Ponto',
 
   // Azul da logo
-  primary: '#234FA0',
+  primary: '#2B57AD',
   primaryDark: '#173A75',
   onPrimary: '#FFFFFF',
 
@@ -17,8 +17,19 @@ export const Brand = {
   accent: '#E1A22C',
   accentDark: '#C2861A',
 
+  // Família navy (fundos escuros coesos com o azul)
+  navy: '#0B1220',
+  navyDeep: '#070D18',
+
+  /** Gradiente do header: do azul (topo) descendo a um navy profundo, para
+   *  fundir suavemente no corpo escuro em vez de virar um bloco azul. */
+  headerGradient: ['#2B57AD', '#1C3E78', '#13294C'] as [string, string, string],
+
+  /** Gradiente do fundo do login (navy elegante com leve toque de azul). */
+  loginGradient: ['#15294E', '#0E1B33', '#0A1322'] as [string, string, string],
+
   // sutil para divisórias e fundos de busca sobre o header
-  searchBg: 'rgba(255,255,255,0.20)',
+  searchBg: 'rgba(255,255,255,0.18)',
   searchPlaceholder: 'rgba(255,255,255,0.80)',
 } as const;
 

@@ -9,9 +9,9 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 export function BrandHeader({ children }: { children: React.ReactNode }) {
   return (
     <LinearGradient
-      colors={[Brand.primary, Brand.primaryDark]}
+      colors={Brand.headerGradient}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      end={{ x: 0.6, y: 1 }}
       style={styles.header}>
       <SafeAreaView edges={['top']}>
         <View style={styles.content}>{children}</View>
