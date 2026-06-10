@@ -38,20 +38,30 @@ export const Fonts = Platform.select({
     rounded: 'ui-rounded',
     /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
+    /** Wordmark da marca (cai em serifa elegante até bundlar a fonte no nativo). */
+    brand: 'Georgia',
   },
   default: {
     sans: 'normal',
     serif: 'serif',
     rounded: 'normal',
     mono: 'monospace',
+    brand: 'serif',
   },
   web: {
     sans: 'var(--font-display)',
     serif: 'var(--font-serif)',
     rounded: 'var(--font-rounded)',
     mono: 'var(--font-mono)',
+    brand: 'var(--font-brand)',
   },
-});
+}) as {
+  sans: string;
+  serif: string;
+  rounded: string;
+  mono: string;
+  brand: string;
+};
 
 export const Spacing = {
   half: 2,

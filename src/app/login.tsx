@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 import { Brand } from '@/constants/brand';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 
 /**
@@ -86,6 +86,10 @@ export default function Login() {
                 <Text style={styles.tagline}>{Brand.tagline}</Text>
                 <View style={styles.tagDash} />
               </View>
+              <Text style={styles.pitch}>
+                Seu canal direto com o RH para justificar o ponto — converse,
+                envie e acompanhe tudo por aqui.
+              </Text>
             </View>
 
             {/* Card de vidro */}
@@ -183,14 +187,25 @@ const styles = StyleSheet.create({
   },
   appName: {
     color: Brand.onPrimary,
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: 6,
-    marginTop: Spacing.two,
+    fontFamily: Fonts.brand,
+    fontSize: 34,
+    fontWeight: '700',
+    letterSpacing: 8,
+    marginTop: Spacing.three,
+    // Cinzel já vem em caixa-alta; o leve espaçamento dá ar de wordmark gravado.
+    ...Platform.select({ web: { textShadow: '0 2px 12px rgba(0,0,0,0.45)' } as object, default: {} }),
   },
-  tagWrap: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  tagDash: { width: 18, height: 1, backgroundColor: 'rgba(225,162,44,0.6)' },
-  tagline: { color: C.textDim, fontSize: 13, letterSpacing: 1 },
+  tagWrap: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: Spacing.one },
+  tagDash: { width: 22, height: 1, backgroundColor: 'rgba(225,162,44,0.65)' },
+  tagline: { color: Brand.accent, fontSize: 12, letterSpacing: 3, fontWeight: '600', textTransform: 'uppercase' },
+  pitch: {
+    color: C.textDim,
+    fontSize: 13.5,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginTop: Spacing.three,
+    paddingHorizontal: Spacing.two,
+  },
 
   card: {
     borderRadius: 22,
