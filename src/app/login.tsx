@@ -27,8 +27,10 @@ import { useAuth } from '@/context/auth';
 const C = {
   card: 'rgba(255,255,255,0.06)',
   cardBorder: 'rgba(160,185,225,0.18)',
-  field: 'rgba(255,255,255,0.05)',
-  fieldBorder: 'rgba(160,185,225,0.20)',
+  // Campo OPACO (mesma cor da máscara de autofill no global.css) — assim o
+  // preenchimento do navegador fica idêntico ao campo, sem o "bloco/sombra".
+  field: '#1A2840',
+  fieldBorder: 'rgba(160,185,225,0.22)',
   text: '#F1F5FC',
   textDim: 'rgba(225,233,245,0.62)',
   placeholder: 'rgba(225,233,245,0.45)',
