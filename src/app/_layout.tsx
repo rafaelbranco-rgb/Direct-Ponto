@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { NotifToast } from '@/components/notif-toast';
 import { AuthProvider } from '@/context/auth';
 import { ThemePrefProvider } from '@/context/theme-pref';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -16,8 +17,10 @@ function Conteudo() {
         <Stack.Screen name="login" />
         <Stack.Screen name="index" />
         <Stack.Screen name="pedidos" />
+        <Stack.Screen name="notificacoes" />
         <Stack.Screen name="categoria/[codigo]" />
       </Stack>
+      <NotifToast />
     </ThemeProvider>
   );
 }

@@ -11,7 +11,6 @@ import { ThemedText } from '@/components/themed-text';
 import { TiltCard } from '@/components/tilt-card';
 import { Brand } from '@/constants/brand';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/auth';
 import { SOLICITACOES } from '@/data/mock';
@@ -29,7 +28,6 @@ const FILTROS: { chave: Filtro; label: string }[] = [
 export default function Pedidos() {
   const router = useRouter();
   const theme = useTheme();
-  const escuro = useColorScheme() === 'dark';
   const { usuario } = useAuth();
   const [filtro, setFiltro] = useState<Filtro>('TODOS');
 

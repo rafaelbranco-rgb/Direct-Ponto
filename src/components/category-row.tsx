@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
@@ -14,10 +14,11 @@ type Props = {
   previewTexto: string;
   previewHora?: string;
   vazio?: boolean;
+  naoLidas?: number;
   onPress: () => void;
 };
 
-export function CategoryRow({ categoria, previewTexto, previewHora, vazio, onPress }: Props) {
+export function CategoryRow({ categoria, previewTexto, previewHora, vazio, naoLidas = 0, onPress }: Props) {
   const theme = useTheme();
   const escuro = useColorScheme() === 'dark';
   const [hover, setHover] = useState(false);
@@ -57,11 +58,18 @@ export function CategoryRow({ categoria, previewTexto, previewHora, vazio, onPre
         </ThemedText>
       </View>
 
-      {previewHora ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          {previewHora}
-        </ThemedText>
-      ) : null}
+      <View style={styles.right}>
+        {previewHora ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {previewHora}
+          </ThemedText>
+        ) : null}
+        {naoLidas > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeTxt}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
+          </View>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -85,4 +93,15 @@ const styles = StyleSheet.create({
   },
   middle: { flex: 1, gap: 2 },
   vazio: { fontStyle: 'italic' },
+  right: { alignItems: 'flex-end', gap: 5 },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    backgroundColor: Brand.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeTxt: { color: Brand.onPrimary, fontSize: 11, fontWeight: '800' },
 });

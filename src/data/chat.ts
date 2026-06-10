@@ -1,3 +1,4 @@
+import { adicionarNotificacao } from './notifications';
 import type { CategoriaCodigo } from './types';
 
 /**
@@ -94,6 +95,37 @@ export function ultimaMensagem(codigo: CategoriaCodigo): Mensagem | undefined {
 /** Gera um número de protocolo fictício. */
 export function novoProtocolo(): number {
   return 11000000 + (Date.now() % 1000000);
+}
+
+function hhmm() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/**
+ * Simula a resposta do atendimento alguns segundos depois (protótipo).
+ * No backend, isto será uma resposta real do gestor/RH chegando via push/socket.
+ * A mensagem é gravada na conversa e dispara uma notificação ao colaborador.
+ */
+const RESPOSTAS = [
+  'Olá! Recebi sua solicitação e já estou analisando. Retorno em instantes.',
+  'Obrigado pelas informações. Vou verificar no sistema e te respondo aqui.',
+  'Certo! Já encaminhei para conferência. Qualquer coisa, aviso por aqui.',
+];
+
+export function agendarRespostaAtendente(categoria: CategoriaCodigo, rotuloCategoria: string) {
+  const idx = conversas[categoria]?.mensagens.length ?? 0;
+  setTimeout(() => {
+    const conv = conversas[categoria];
+    if (!conv) return;
+    const texto = RESPOSTAS[idx % RESPOSTAS.length];
+    conv.mensagens = [
+      ...conv.mensagens,
+      { id: `at-${Date.now()}`, autor: 'ATENDENTE', texto, horario: hhmm() },
+    ];
+    adicionarNotificacao(categoria, `Contato • ${rotuloCategoria}`, texto);
+  }, 6500);
 }
 
 export interface PassoTriagem {

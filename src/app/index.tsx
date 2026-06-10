@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Image } from 'expo-image';
@@ -17,6 +17,13 @@ import { Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { CATEGORIAS } from '@/data/mock';
 import { ultimaMensagem } from '@/data/chat';
+import {
+  assinarNotificacoes,
+  naoLidasCategoria,
+  totalNaoLidas,
+  versaoNotificacoes,
+  versaoServidor,
+} from '@/data/notifications';
 
 export default function CaixaDeEntrada() {
   const router = useRouter();
@@ -26,6 +33,8 @@ export default function CaixaDeEntrada() {
   const [, setTick] = useState(0);
 
   useFocusEffect(useCallback(() => setTick((t) => t + 1), []));
+  useSyncExternalStore(assinarNotificacoes, versaoNotificacoes, versaoServidor);
+  const naoLidas = totalNaoLidas();
 
   const categorias = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -50,6 +59,16 @@ export default function CaixaDeEntrada() {
           <View style={styles.acoes}>
             <Pressable onPress={() => router.push('/pedidos')} hitSlop={10}>
               <Ionicons name="document-text-outline" size={23} color={Brand.onPrimary} />
+            </Pressable>
+            <Pressable onPress={() => router.push('/notificacoes')} hitSlop={10}>
+              <View>
+                <Ionicons name="notifications-outline" size={23} color={Brand.onPrimary} />
+                {naoLidas > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeTxt}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
+                  </View>
+                )}
+              </View>
             </Pressable>
             <Pressable onPress={() => setDrawer(true)} hitSlop={10}>
               <Ionicons name="menu" size={26} color={Brand.onPrimary} />
@@ -87,6 +106,7 @@ export default function CaixaDeEntrada() {
                   previewTexto={previewTexto}
                   previewHora={ultima?.horario}
                   vazio={!ultima}
+                  naoLidas={naoLidasCategoria(item.codigo)}
                   onPress={() =>
                     router.push({ pathname: '/categoria/[codigo]', params: { codigo: item.codigo } })
                   }
@@ -111,6 +131,19 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   acoes: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -7,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    backgroundColor: Brand.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeTxt: { color: '#3A2A06', fontSize: 10, fontWeight: '800' },
   greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   emblema: {

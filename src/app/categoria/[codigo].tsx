@@ -26,6 +26,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/auth';
 import { categoriaPorCodigo } from '@/data/mock';
 import {
+  agendarRespostaAtendente,
   getConversa,
   novoProtocolo,
   passosTriagem,
@@ -33,6 +34,7 @@ import {
   type AnexoMsg,
   type Mensagem,
 } from '@/data/chat';
+import { marcarCategoriaLida, pedirPermissaoNotificacao } from '@/data/notifications';
 import type { CategoriaCodigo } from '@/data/types';
 
 function doisDigitos(n: number) {
@@ -97,6 +99,11 @@ export default function ChatCategoria() {
     salvarConversa({ categoria: cod, remetente: conversaInicial.remetente, triada, mensagens });
   }, [cod, conversaInicial.remetente, mensagens, triada]);
 
+  // Ao abrir o atendimento, marca as notificações desta categoria como lidas.
+  useEffect(() => {
+    marcarCategoriaLida(cod);
+  }, [cod]);
+
   function add(m: Omit<Mensagem, 'id'>) {
     setMensagens((prev) => [...prev, { ...m, id: nid() }]);
   }
@@ -109,6 +116,8 @@ export default function ChatCategoria() {
     addSistema(`Protocolo ${novoProtocolo()} — Atendimento solicitado`, dataHoraAgora());
     addAtendente('Recebemos sua solicitação. Em breve um responsável dará retorno por aqui.');
     setTriada(true);
+    // Simula o atendimento respondendo em seguida → gera notificação.
+    agendarRespostaAtendente(cod, categoria?.label ?? 'Ponto');
   }
 
   function responderTriagem(textoResp?: string, anexo?: AnexoMsg) {
@@ -133,10 +142,15 @@ export default function ChatCategoria() {
   function enviar() {
     const t = texto.trim();
     if (!t) return;
+    pedirPermissaoNotificacao(); // gesto do usuário — momento bom para pedir permissão
     setTexto('');
     setMenuAnexo(false);
-    if (!triada) responderTriagem(t);
-    else addColaborador(t);
+    if (!triada) {
+      responderTriagem(t);
+    } else {
+      addColaborador(t);
+      agendarRespostaAtendente(cod, categoria?.label ?? 'Ponto');
+    }
   }
 
   function aoAnexar(anexo: AnexoMsg) {
