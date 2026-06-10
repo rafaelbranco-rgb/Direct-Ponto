@@ -5,6 +5,7 @@
 
 ## Índice
 - [ARQUITETURA.md](./ARQUITETURA.md) — stack, estrutura de pastas, modelo de dados
+- [PLATAFORMA_WEB.md](./PLATAFORMA_WEB.md) — plano da plataforma web (gestor/RH): telas, fluxo, stack
 - [STATUS.md](./STATUS.md) — o que está pronto, o que falta, roadmap
 - [MONDAY.md](./MONDAY.md) — board, subelementos e IDs no Monday.com
 
