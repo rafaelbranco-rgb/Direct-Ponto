@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -74,11 +75,11 @@ export default function Login() {
           <View style={styles.container}>
             {/* Marca */}
             <View style={styles.brand}>
-              <View style={styles.logo}>
-                <View style={styles.logoInner}>
-                  <Text style={styles.logoText}>{Brand.company[0]}</Text>
-                </View>
-              </View>
+              <Image
+                source={require('@/assets/images/logo-contato.png')}
+                style={styles.emblema}
+                contentFit="contain"
+              />
               <Text style={styles.appName}>CONTATO</Text>
               <View style={styles.tagWrap}>
                 <View style={styles.tagDash} />
@@ -172,35 +173,14 @@ const styles = StyleSheet.create({
   },
 
   brand: { alignItems: 'center', gap: Spacing.two },
-  logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(225,162,44,0.55)', // anel dourado discreto
+  emblema: {
+    width: 132,
+    height: 107,
     ...Platform.select({
-      web: { boxShadow: '0 12px 34px rgba(0,0,0,0.35)' } as object,
-      default: {
-        shadowColor: '#000',
-        shadowOpacity: 0.35,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 10,
-      },
+      web: { filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.4))' } as object,
+      default: {},
     }),
   },
-  logoInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Brand.onPrimary,
-  },
-  logoText: { color: Brand.accent, fontWeight: '800', fontSize: 36 },
   appName: {
     color: Brand.onPrimary,
     fontSize: 30,

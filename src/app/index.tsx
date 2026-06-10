@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 
@@ -51,7 +52,11 @@ export default function CaixaDeEntrada() {
         </View>
         <View style={styles.brandRow}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>{Brand.company[0]}</Text>
+            <Image
+              source={require('@/assets/images/logo-contato.png')}
+              style={styles.logoImg}
+              contentFit="contain"
+            />
           </View>
           <View>
             <Text style={styles.appName}>{Brand.appName}</Text>
@@ -104,14 +109,15 @@ const styles = StyleSheet.create({
   greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   logo: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: Brand.onPrimary,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 5,
   },
-  logoText: { color: Brand.accent, fontWeight: '800', fontSize: 22 },
+  logoImg: { width: '100%', height: '100%' },
   appName: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700' },
   tagline: { color: Brand.onPrimary, opacity: 0.85, fontSize: 13 },
 

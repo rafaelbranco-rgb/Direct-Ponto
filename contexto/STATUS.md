@@ -13,10 +13,12 @@ Atualizado em: 09/06/2026 (fim do dia 1 de desenvolvimento).
 - Identidade **CONTATO** (azul + dourado) aplicada.
 
 ## ⏳ Pendências imediatas
-1. Confirmar que sumiram os "erros" no navegador (após Ctrl+Shift+R). Se persistir,
-   pegar print do Console (F12).
-2. **Logo real**: salvar `assets/images/logo-contato.png` e trocar o "C" pelo brasão.
-3. **Persistir o tema** escolhido (AsyncStorage) — hoje volta ao padrão ao recarregar.
+1. ✅ Erros do React Compiler corrigidos (lint: 0 problemas). Validar visualmente no navegador.
+2. ✅ **Logo real** aplicada: `assets/images/logo-contato.png` (brasão recortado) +
+   `logo-contato-full.png` (completa) + favicon web. Usada no login e no header.
+3. ✅ **Tema persiste** (web/localStorage via useSyncExternalStore). Native (AsyncStorage)
+   fica para quando houver build nativo.
+4. Paleta unificada em família navy (combina com o azul); login redesenhado.
 
 ## 🔜 Próximos grandes passos
 1. **Backend**: banco PostgreSQL (migrations) + API NestJS + **login real** (RF-01).
