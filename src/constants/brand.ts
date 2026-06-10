@@ -13,9 +13,9 @@ export const Brand = {
   primaryDark: '#173A75',
   onPrimary: '#FFFFFF',
 
-  // Dourado da logo (acento)
-  accent: '#E1A22C',
-  accentDark: '#C2861A',
+  // Dourado da logo (acento) — mais forte/vivo para ganhar presença e elegância.
+  accent: '#F2B63D',
+  accentDark: '#D49526',
 
   // Família navy (fundos escuros coesos com o azul)
   navy: '#0B1220',

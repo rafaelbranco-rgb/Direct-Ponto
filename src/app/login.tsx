@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     ...Platform.select({ web: { textShadow: '0 2px 12px rgba(0,0,0,0.45)' } as object, default: {} }),
   },
   tagWrap: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: Spacing.one },
-  tagDash: { width: 22, height: 1, backgroundColor: 'rgba(225,162,44,0.65)' },
+  tagDash: { width: 22, height: 1, backgroundColor: 'rgba(242,182,61,0.8)' },
   tagline: { color: Brand.accent, fontSize: 12, letterSpacing: 3, fontWeight: '600', textTransform: 'uppercase' },
   pitch: {
     color: C.textDim,
