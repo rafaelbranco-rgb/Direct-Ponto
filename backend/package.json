@@ -1,0 +1,21 @@
+{
+  "name": "contato-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "API do Contato — login do colaborador (CPF/matricula) com senha provisoria e troca obrigatoria.",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "import:rm": "node src/import-rm.js",
+    "test": "node test/smoke.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "pg-mem": "^3.0.5"
+  }
+}

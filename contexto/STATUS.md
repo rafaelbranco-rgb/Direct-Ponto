@@ -20,8 +20,19 @@ Atualizado em: 09/06/2026 (fim do dia 1 de desenvolvimento).
    fica para quando houver build nativo.
 4. Paleta unificada em família navy (combina com o azul); login redesenhado.
 
+## ✅ Backend — login do colaborador (subelemento #8, parcial)
+- Pasta `backend/` (Node + Express + `pg` + JWT + bcrypt). Roda em **PostgreSQL**
+  no servidor (via `DATABASE_URL` + `docker-compose`) e, sem ele, em **pg-mem**
+  (memória) para dev/validação local.
+- **Login por CPF/matrícula**, **senha provisória aleatória** + **troca obrigatória
+  no 1º acesso**. Import dos CPFs do **RM Labore via CSV** (`src/import-rm.js`),
+  gerando `senhas-provisorias.csv` para o DP distribuir.
+- Validado: smoke test + endpoints por HTTP (login → trocar senha → re-login).
+- ⏳ Falta: subir no servidor on-premise, RM via API (hoje é CSV) e **plugar o app**
+  no backend (login real no lugar do mock) + tela de trocar senha.
+
 ## 🔜 Próximos grandes passos
-1. **Backend**: banco PostgreSQL (migrations) + API NestJS + **login real** (RF-01).
+1. **Plugar o app no backend** (login real RF-01) + tela de troca de senha.
 2. **Integração Nexti** (leitura de marcações/inconsistências — RF-02).
 3. **Plataforma Web** (gestor/RH): filas de aprovação 1º e 2º nível (RF-04/05).
 4. **Notificações** ao colaborador (RF-07) e **exportação RM Labore** (RF-08).

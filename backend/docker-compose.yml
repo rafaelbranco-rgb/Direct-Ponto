@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: contato-postgres
+    environment:
+      POSTGRES_USER: contato
+      POSTGRES_PASSWORD: contato
+      POSTGRES_DB: contato
+    ports:
+      - '5432:5432'
+    volumes:
+      - contato_pg:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  contato_pg:
