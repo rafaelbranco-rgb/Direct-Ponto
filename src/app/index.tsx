@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
@@ -64,7 +65,7 @@ export default function CaixaDeEntrada() {
         <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar categoria" />
       </BrandHeader>
 
-      <View style={styles.corpo}>
+      <Animated.View style={styles.corpo} entering={FadeInDown.duration(320)}>
         <GlassSurface style={styles.cartao}>
           <FlatList
             data={categorias}
@@ -94,7 +95,7 @@ export default function CaixaDeEntrada() {
             }
           />
         </GlassSurface>
-      </View>
+      </Animated.View>
 
       <SettingsDrawer visivel={drawer} aoFechar={() => setDrawer(false)} />
     </View>

@@ -17,6 +17,16 @@ body {
   overflow: hidden;
 }
 
+/* Troca de tema fluida: anima as cores das superfícies/textos (o gradiente de
+   fundo faz cross-fade próprio). Só cores — não mexe em transform (tilt). */
+* {
+  transition:
+    background-color 280ms ease,
+    border-color 280ms ease,
+    color 220ms ease,
+    fill 220ms ease;
+}
+
 :root {
   /* Fonte da marca (wordmark CONTATO) — capitais romanas elegantes, combinam
      com o brasão. No on-premise, self-hospedar a fonte depois. */

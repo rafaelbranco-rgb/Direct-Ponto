@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, { Easing, FadeInRight } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -253,7 +254,9 @@ export default function ChatCategoria() {
   }
 
   return (
-    <View style={styles.screen}>
+    <Animated.View
+      style={styles.screen}
+      entering={FadeInRight.duration(300).easing(Easing.out(Easing.cubic))}>
       <ScreenBackground />
 
       <BrandHeader>
@@ -322,7 +325,7 @@ export default function ChatCategoria() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </Animated.View>
   );
 }
 
