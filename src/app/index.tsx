@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
@@ -47,7 +47,7 @@ export default function CaixaDeEntrada() {
             Olá, {usuario.identificador}
           </Text>
           <Pressable onPress={() => setDrawer(true)} hitSlop={10}>
-            <Ionicons name="settings-outline" size={22} color={Brand.onPrimary} />
+            <Ionicons name="menu" size={26} color={Brand.onPrimary} />
           </Pressable>
         </View>
         <View style={styles.brandRow}>
@@ -55,7 +55,6 @@ export default function CaixaDeEntrada() {
             source={require('@/assets/images/logo-contato.png')}
             style={styles.emblema}
             contentFit="contain"
-            tintColor={Brand.onPrimary}
           />
           <View style={styles.brandText}>
             <Text style={styles.appName}>{Brand.appName}</Text>
@@ -107,7 +106,14 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   greeting: { color: Brand.onPrimary, opacity: 0.95, fontSize: 14, fontWeight: '600', flex: 1 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  emblema: { width: 46, height: 38, opacity: 0.96 },
+  emblema: {
+    width: 52,
+    height: 44,
+    ...Platform.select({
+      web: { filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' } as object,
+      default: {},
+    }),
+  },
   brandText: { gap: 1 },
   appName: {
     color: Brand.onPrimary,

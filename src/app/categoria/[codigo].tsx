@@ -45,6 +45,11 @@ function dataHoraAgora() {
   const d = new Date();
   return `${doisDigitos(d.getDate())}/${doisDigitos(d.getMonth() + 1)}/${d.getFullYear()} às ${agora()}h`;
 }
+/** Encurta nomes longos (ex.: "RAFAEL MARTINIANO BARBOSA BRANCO" → "RAFAEL MARTINIANO"). */
+function primeiroNome(nomeCompleto: string) {
+  const partes = nomeCompleto.trim().split(/\s+/);
+  return partes.length <= 2 ? nomeCompleto : `${partes[0]} ${partes[1]}`;
+}
 
 export default function ChatCategoria() {
   const router = useRouter();
@@ -155,14 +160,24 @@ export default function ChatCategoria() {
       aoAnexar({ nome: a.fileName ?? 'imagem.jpg', ehImagem: true, uri: a.uri });
     }
   }
-  async function anexarPdf() {
+  async function anexarDocumento() {
     const res = await DocumentPicker.getDocumentAsync({
-      type: 'application/pdf',
+      // Documentos em geral (não só PDF): PDF, Word, Excel, texto, imagens.
+      type: [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain',
+        'image/*',
+      ],
       copyToCacheDirectory: true,
     });
     if (!res.canceled) {
       const a = res.assets[0];
-      aoAnexar({ nome: a.name, ehImagem: false });
+      const ehImagem = (a.mimeType ?? '').startsWith('image/');
+      aoAnexar({ nome: a.name, ehImagem, uri: ehImagem ? a.uri : undefined });
     }
   }
 
@@ -183,10 +198,10 @@ export default function ChatCategoria() {
     const mostrarNome = ehColaborador && (!anterior || anterior.autor !== 'COLABORADOR');
 
     return (
-      <View style={{ alignItems: ehColaborador ? 'flex-end' : 'flex-start' }}>
+      <View style={[styles.linha, { alignItems: ehColaborador ? 'flex-end' : 'flex-start' }]}>
         {mostrarNome && (
-          <Text style={[styles.nome, { color: theme.textSecondary }]}>
-            {conversaInicial.remetente}
+          <Text style={[styles.nome, { color: theme.textSecondary }]} numberOfLines={1}>
+            {primeiroNome(conversaInicial.remetente)}
           </Text>
         )}
         <View
@@ -260,49 +275,51 @@ export default function ChatCategoria() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <FlatList
-          ref={listaRef}
-          data={mensagens}
-          keyExtractor={(m) => m.id}
-          style={styles.flex}
-          contentContainerStyle={styles.lista}
-          renderItem={({ item, index }) => renderMensagem(item, index)}
-          onContentSizeChange={() => listaRef.current?.scrollToEnd({ animated: true })}
-        />
+        <View style={styles.centro}>
+          <FlatList
+            ref={listaRef}
+            data={mensagens}
+            keyExtractor={(m) => m.id}
+            style={styles.flex}
+            contentContainerStyle={styles.lista}
+            renderItem={({ item, index }) => renderMensagem(item, index)}
+            onContentSizeChange={() => listaRef.current?.scrollToEnd({ animated: true })}
+          />
 
-        {/* Menu de anexo */}
-        {menuAnexo && (
-          <View style={styles.menuWrap}>
-            <GlassSurface style={styles.menuAnexo}>
-              <BotaoAnexo icone="camera-outline" texto="Câmera" onPress={tirarFoto} />
-              <BotaoAnexo icone="images-outline" texto="Galeria" onPress={escolherGaleria} />
-              <BotaoAnexo icone="document-outline" texto="PDF" onPress={anexarPdf} />
+          {/* Menu de anexo */}
+          {menuAnexo && (
+            <View style={styles.menuWrap}>
+              <GlassSurface style={styles.menuAnexo}>
+                <BotaoAnexo icone="camera-outline" texto="Câmera" onPress={tirarFoto} />
+                <BotaoAnexo icone="images-outline" texto="Galeria" onPress={escolherGaleria} />
+                <BotaoAnexo icone="document-outline" texto="Documento" onPress={anexarDocumento} />
+              </GlassSurface>
+            </View>
+          )}
+
+          {/* Composer de vidro */}
+          <View style={styles.composerWrap}>
+            <GlassSurface style={styles.composer}>
+              <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
+                <Ionicons name="attach" size={22} color={theme.textSecondary} />
+              </Pressable>
+              <TextInput
+                value={texto}
+                onChangeText={setTexto}
+                placeholder="Mensagem"
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.input, { color: theme.text }]}
+                multiline
+                onSubmitEditing={enviar}
+              />
+              <Pressable
+                onPress={enviar}
+                disabled={!texto.trim()}
+                style={[styles.enviar, { backgroundColor: Brand.primary, opacity: texto.trim() ? 1 : 0.4 }]}>
+                <Ionicons name="send" size={18} color={Brand.onPrimary} />
+              </Pressable>
             </GlassSurface>
           </View>
-        )}
-
-        {/* Composer de vidro */}
-        <View style={styles.composerWrap}>
-          <GlassSurface style={styles.composer}>
-            <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
-              <Ionicons name="attach" size={22} color={theme.textSecondary} />
-            </Pressable>
-            <TextInput
-              value={texto}
-              onChangeText={setTexto}
-              placeholder="Mensagem"
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.input, { color: theme.text }]}
-              multiline
-              onSubmitEditing={enviar}
-            />
-            <Pressable
-              onPress={enviar}
-              disabled={!texto.trim()}
-              style={[styles.enviar, { backgroundColor: Brand.primary, opacity: texto.trim() ? 1 : 0.4 }]}>
-              <Ionicons name="send" size={18} color={Brand.onPrimary} />
-            </Pressable>
-          </GlassSurface>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -339,19 +356,23 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   titleText: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700', flex: 1 },
 
+  // Wrapper central único (evita overflow à direita no web ao centralizar
+  // cada elemento separadamente).
+  centro: { flex: 1, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
   lista: {
     padding: Spacing.three,
     gap: Spacing.two,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    // Ancora as mensagens embaixo (espaço vazio fica no topo, como num chat).
+    flexGrow: 1,
+    justifyContent: 'flex-end',
   },
+  linha: { width: '100%' },
 
   sistema: { alignItems: 'center', paddingVertical: Spacing.two, gap: 2 },
   sistemaTexto: { fontSize: 13, textAlign: 'center', fontWeight: '600' },
   sistemaData: { fontSize: 12, textAlign: 'center' },
 
-  nome: { fontSize: 12, fontWeight: '600', marginBottom: 2, marginRight: 4 },
+  nome: { fontSize: 12, fontWeight: '600', marginBottom: 2, marginRight: 4, maxWidth: '82%' },
   balao: {
     maxWidth: '82%',
     borderRadius: 16,
@@ -366,7 +387,7 @@ const styles = StyleSheet.create({
   anexoArq: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   anexoArqTxt: { fontSize: 15, fontWeight: '600' },
 
-  menuWrap: { paddingHorizontal: Spacing.three, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
+  menuWrap: { paddingHorizontal: Spacing.three },
   menuAnexo: {
     flexDirection: 'row',
     gap: Spacing.two,
@@ -385,9 +406,6 @@ const styles = StyleSheet.create({
   composerWrap: {
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.three,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
   },
   composer: {
     flexDirection: 'row',

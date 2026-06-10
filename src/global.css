@@ -1,5 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
+/* Trava o app na altura da viewport: o scroll acontece DENTRO das listas
+   (caixa de entrada / chat), não na página — senão o body rola e os itens
+   "somem" para cima ao arrastar. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 :root {
   /* Fonte da marca (wordmark CONTATO) — capitais romanas elegantes, combinam
      com o brasão. No on-premise, self-hospedar a fonte depois. */
@@ -11,4 +28,18 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
+}
+
+/* Autofill do navegador (CPF/senha salvos): remove o fundo branco/amarelo feio
+   e mantém o campo no estilo escuro do login (selo navy + texto claro). */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #F1F5FC !important;
+  caret-color: #F1F5FC;
+  -webkit-box-shadow: 0 0 0 1000px #18253C inset !important;
+  box-shadow: 0 0 0 1000px #18253C inset !important;
+  border-radius: 13px;
+  transition: background-color 99999s ease-in-out 0s;
 }

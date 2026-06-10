@@ -51,8 +51,9 @@ export function SettingsDrawer({ visivel, aoFechar }: { visivel: boolean; aoFech
   }, [visivel, progresso]);
 
   const estiloBackdrop = useAnimatedStyle(() => ({ opacity: progresso.value }));
+  // Abre pela DIREITA: fora da tela = +largura; aberto = 0.
   const estiloPainel = useAnimatedStyle(
-    () => ({ transform: [{ translateX: interpolate(progresso.value, [0, 1], [-largura, 0]) }] }),
+    () => ({ transform: [{ translateX: interpolate(progresso.value, [0, 1], [largura, 0]) }] }),
     [largura],
   );
 
@@ -194,8 +195,8 @@ function ItemMenu({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
-  painel: { position: 'absolute', top: 0, bottom: 0, left: 0 },
-  glass: { flex: 1, borderRadius: 0, borderTopWidth: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
+  painel: { position: 'absolute', top: 0, bottom: 0, right: 0 },
+  glass: { flex: 1, borderRadius: 0, borderTopWidth: 0, borderRightWidth: 0, borderBottomWidth: 0 },
   conteudo: { flex: 1, padding: Spacing.four, gap: Spacing.three },
 
   perfil: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
