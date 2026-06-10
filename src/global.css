@@ -48,6 +48,7 @@ input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-text-fill-color: #F1F5FC !important;
   caret-color: #F1F5FC;
+  text-shadow: none !important; /* tira a sombra feia que o navegador poe nos caracteres */
   -webkit-box-shadow: 0 0 0 1000px #18253C inset !important;
   box-shadow: 0 0 0 1000px #18253C inset !important;
   border-radius: 13px;
