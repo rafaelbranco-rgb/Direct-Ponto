@@ -29,7 +29,7 @@ import {
 export default function CaixaDeEntrada() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { usuario } = useAuth();
+  const { usuario, carregando } = useAuth();
   const [busca, setBusca] = useState('');
   const [drawer, setDrawer] = useState(false);
   const [, setTick] = useState(0);
@@ -47,6 +47,7 @@ export default function CaixaDeEntrada() {
     );
   }, [busca]);
 
+  if (carregando) return null;
   if (!usuario) return <Redirect href="/login" />;
 
   return (
@@ -56,7 +57,7 @@ export default function CaixaDeEntrada() {
       <BrandHeader>
         <View style={styles.topRow}>
           <Text style={styles.greeting} numberOfLines={1}>
-            Olá, {usuario.identificador}
+            Olá, {usuario.nome ? usuario.nome.split(' ')[0] : usuario.identificador}
           </Text>
           <View style={styles.acoes}>
             <Pressable onPress={() => router.push('/pedidos')} hitSlop={10}>

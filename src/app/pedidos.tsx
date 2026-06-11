@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,8 +14,26 @@ import { Brand } from '@/constants/brand';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/auth';
+import { api, apiAtiva, type ChamadoApi } from '@/data/api';
 import { SOLICITACOES } from '@/data/mock';
-import type { StatusColaborador } from '@/data/types';
+import type { CategoriaCodigo, Solicitacao, StatusColaborador } from '@/data/types';
+
+/** Converte um chamado do backend para a visão de pedido do colaborador. */
+function paraSolicitacao(c: ChamadoApi): Solicitacao {
+  const status: StatusColaborador =
+    c.status === 'APROVADO' ? 'APROVADO' : c.status === 'RECUSADO' ? 'RECUSADO' : 'PENDENTE';
+  return {
+    id: c.id,
+    categoria: c.categoria as CategoriaCodigo,
+    dataOcorrencia: c.dataOcorrencia,
+    horarioOriginal: c.horarioOriginal ?? undefined,
+    horarioProposto: c.horarioProposto ?? undefined,
+    descricao: c.descricao ?? '',
+    status,
+    motivoRecusa: c.motivoRecusa ?? undefined,
+    criadoEm: c.criadoEm,
+  };
+}
 
 type Filtro = 'TODOS' | StatusColaborador;
 
@@ -30,13 +48,22 @@ export default function Pedidos() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { usuario } = useAuth();
+  const { usuario, carregando } = useAuth();
   const [filtro, setFiltro] = useState<Filtro>('TODOS');
+  const [remotos, setRemotos] = useState<Solicitacao[]>([]);
 
-  const pedidos = useMemo(
-    () => [...SOLICITACOES].sort((a, b) => b.criadoEm.localeCompare(a.criadoEm)),
-    [],
-  );
+  useEffect(() => {
+    if (!apiAtiva) return;
+    api
+      .meusChamados()
+      .then((r) => setRemotos(r.meus.map(paraSolicitacao)))
+      .catch(() => {});
+  }, []);
+
+  const pedidos = useMemo(() => {
+    const base = apiAtiva ? remotos : SOLICITACOES;
+    return [...base].sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+  }, [remotos]);
   const contagem = useMemo(() => {
     const c: Record<Filtro, number> = { TODOS: pedidos.length, PENDENTE: 0, APROVADO: 0, RECUSADO: 0 };
     for (const p of pedidos) c[p.status] += 1;
@@ -47,6 +74,7 @@ export default function Pedidos() {
     [pedidos, filtro],
   );
 
+  if (carregando) return null;
   if (!usuario) return <Redirect href="/login" />;
 
   return (

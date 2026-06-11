@@ -1,29 +1,77 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+
+import { api, apiAtiva, setToken, type UsuarioApi } from '@/data/api';
 
 export type Usuario = {
+  id?: string;
   nome: string;
   /** CPF ou matrícula informado no login. */
   identificador: string;
+  tipo?: 'COLABORADOR' | 'ATENDENTE';
 };
 
 type AuthContextValue = {
   usuario: Usuario | null;
+  carregando: boolean;
+  /** Login demo (sem backend). */
   entrar: (usuario: Usuario) => void;
+  /** Login real contra o backend (lança erro com mensagem). */
+  entrarApi: (identificador: string, senha: string) => Promise<void>;
+  /** Aplica a sessão após o 1º acesso (definir senha). */
+  aplicarSessao: (token: string, usuario: UsuarioApi) => void;
   sair: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function mapear(u: UsuarioApi): Usuario {
+  return { id: u.id, nome: u.nome, identificador: u.cpf ?? u.matricula ?? u.email ?? '', tipo: u.tipo };
+}
+
 /**
- * Autenticação em memória (protótipo). Na integração, o `entrar` fará a
- * chamada real ao backend (login por CPF/matrícula — RF-01) e guardará o token.
+ * Autenticação do colaborador. Com EXPO_PUBLIC_API_URL definido, fala com o
+ * backend (login por CPF + 1º acesso). Sem a URL, mantém o modo demonstração.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [carregando, setCarregando] = useState<boolean>(apiAtiva);
+
+  useEffect(() => {
+    if (!apiAtiva) return;
+    let vivo = true;
+    api
+      .me()
+      .then((u) => vivo && setUsuario(mapear(u)))
+      .catch(() => {
+        if (!vivo) return;
+        setToken(null);
+        setUsuario(null);
+      })
+      .finally(() => vivo && setCarregando(false));
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  function entrar(u: Usuario) {
+    setUsuario(u);
+  }
+  async function entrarApi(identificador: string, senha: string) {
+    const r = await api.login(identificador, senha);
+    setToken(r.token);
+    setUsuario(mapear(r.usuario));
+  }
+  function aplicarSessao(token: string, u: UsuarioApi) {
+    setToken(token);
+    setUsuario(mapear(u));
+  }
+  function sair() {
+    setToken(null);
+    setUsuario(null);
+  }
 
   return (
-    <AuthContext.Provider
-      value={{ usuario, entrar: setUsuario, sair: () => setUsuario(null) }}>
+    <AuthContext.Provider value={{ usuario, carregando, entrar, entrarApi, aplicarSessao, sair }}>
       {children}
     </AuthContext.Provider>
   );

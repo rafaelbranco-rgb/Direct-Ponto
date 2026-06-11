@@ -13,13 +13,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 
 import { TiltCard } from '@/components/tilt-card';
 
 import { Brand } from '@/constants/brand';
 import { Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
+import { api, apiAtiva } from '@/data/api';
 
 /**
  * Paleta fixa do login (sempre navy + vidro), independente do tema do app —
@@ -40,21 +41,103 @@ const C = {
 
 export default function Login() {
   const router = useRouter();
-  const { entrar } = useAuth();
+  const { entrar, entrarApi, aplicarSessao, usuario, carregando } = useAuth();
 
+  const [modo, setModo] = useState<'login' | 'primeiro'>('login');
   const [identificador, setIdentificador] = useState('');
   const [senha, setSenha] = useState('');
   const [verSenha, setVerSenha] = useState(false);
   const [erro, setErro] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
-  function fazerLogin() {
+  // 1º acesso (cadastro de senha por CPF, validado no RM)
+  const [etapa, setEtapa] = useState<'cpf' | 'senha'>('cpf');
+  const [nomeRm, setNomeRm] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirma, setConfirma] = useState('');
+
+  if (carregando) return null;
+  if (usuario) return <Redirect href="/" />;
+
+  async function fazerLogin() {
     if (!identificador.trim() || !senha.trim()) {
       setErro('Informe seu CPF/matrícula e a senha.');
       return;
     }
-    // TODO: trocar por chamada real ao backend (RF-01). Hoje aceita qualquer valor.
+    if (apiAtiva) {
+      setEnviando(true);
+      setErro('');
+      try {
+        await entrarApi(identificador.trim(), senha);
+        router.replace('/');
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : 'Não foi possível entrar.');
+      } finally {
+        setEnviando(false);
+      }
+      return;
+    }
+    // Modo demonstração (sem backend).
     entrar({ nome: 'Colaborador', identificador: identificador.trim() });
     router.replace('/');
+  }
+
+  async function verificarCpf() {
+    if (!identificador.trim()) {
+      setErro('Informe seu CPF.');
+      return;
+    }
+    setEnviando(true);
+    setErro('');
+    try {
+      const r = await api.verificarCpf(identificador.trim());
+      setNomeRm(r.nome);
+      if (r.precisaDefinirSenha) setEtapa('senha');
+      else {
+        setErro('Você já tem senha cadastrada. Faça login.');
+        setModo('login');
+      }
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'CPF não encontrado no RM.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function definirSenha() {
+    if (novaSenha.length < 6) {
+      setErro('A senha deve ter ao menos 6 caracteres.');
+      return;
+    }
+    if (novaSenha !== confirma) {
+      setErro('As senhas não conferem.');
+      return;
+    }
+    setEnviando(true);
+    setErro('');
+    try {
+      const r = await api.definirSenha(identificador.trim(), novaSenha);
+      aplicarSessao(r.token, r.usuario);
+      router.replace('/');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível definir a senha.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function irParaPrimeiroAcesso() {
+    setModo('primeiro');
+    setEtapa('cpf');
+    setErro('');
+    setSenha('');
+  }
+  function voltarParaLogin() {
+    setModo('login');
+    setEtapa('cpf');
+    setErro('');
+    setNovaSenha('');
+    setConfirma('');
   }
 
   return (
@@ -106,64 +189,158 @@ export default function Login() {
             {/* Card de vidro (com tilt 3D sutil no web) */}
             <TiltCard max={4}>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Acesse sua conta</Text>
-              <Text style={styles.cardSub}>
-                Entre para enviar e acompanhar suas justificativas de ponto.
-              </Text>
+              {modo === 'login' ? (
+                <>
+                  <Text style={styles.cardTitle}>Acesse sua conta</Text>
+                  <Text style={styles.cardSub}>
+                    Entre para enviar e acompanhar suas justificativas de ponto.
+                  </Text>
 
-              {/* CPF / matrícula */}
-              <View style={styles.inputRow}>
-                <Ionicons name="person-outline" size={20} color={C.textDim} />
-                <TextInput
-                  value={identificador}
-                  onChangeText={(t) => {
-                    setIdentificador(t);
-                    setErro('');
-                  }}
-                  placeholder="CPF ou matrícula"
-                  placeholderTextColor={C.placeholder}
-                  keyboardType="numbers-and-punctuation"
-                  autoCapitalize="none"
-                  style={styles.input}
-                />
-              </View>
+                  {/* CPF / matrícula */}
+                  <View style={styles.inputRow}>
+                    <Ionicons name="person-outline" size={20} color={C.textDim} />
+                    <TextInput
+                      value={identificador}
+                      onChangeText={(t) => {
+                        setIdentificador(t);
+                        setErro('');
+                      }}
+                      placeholder="CPF ou matrícula"
+                      placeholderTextColor={C.placeholder}
+                      keyboardType="numbers-and-punctuation"
+                      autoCapitalize="none"
+                      style={styles.input}
+                    />
+                  </View>
 
-              {/* Senha */}
-              <View style={styles.inputRow}>
-                <Ionicons name="lock-closed-outline" size={20} color={C.textDim} />
-                <TextInput
-                  value={senha}
-                  onChangeText={(t) => {
-                    setSenha(t);
-                    setErro('');
-                  }}
-                  placeholder="Senha"
-                  placeholderTextColor={C.placeholder}
-                  secureTextEntry={!verSenha}
-                  style={styles.input}
-                  onSubmitEditing={fazerLogin}
-                />
-                <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8}>
-                  <Ionicons
-                    name={verSenha ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={C.textDim}
-                  />
-                </Pressable>
-              </View>
+                  {/* Senha */}
+                  <View style={styles.inputRow}>
+                    <Ionicons name="lock-closed-outline" size={20} color={C.textDim} />
+                    <TextInput
+                      value={senha}
+                      onChangeText={(t) => {
+                        setSenha(t);
+                        setErro('');
+                      }}
+                      placeholder="Senha"
+                      placeholderTextColor={C.placeholder}
+                      secureTextEntry={!verSenha}
+                      style={styles.input}
+                      onSubmitEditing={fazerLogin}
+                    />
+                    <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8}>
+                      <Ionicons
+                        name={verSenha ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color={C.textDim}
+                      />
+                    </Pressable>
+                  </View>
 
-              {erro ? <Text style={styles.erro}>{erro}</Text> : null}
+                  {erro ? <Text style={styles.erro}>{erro}</Text> : null}
 
-              <Pressable
-                onPress={fazerLogin}
-                style={({ pressed }) => [styles.botao, pressed && styles.botaoPress]}>
-                <Text style={styles.botaoText}>Entrar</Text>
-                <Ionicons name="arrow-forward" size={18} color={Brand.onPrimary} />
-              </Pressable>
+                  <Pressable
+                    onPress={fazerLogin}
+                    disabled={enviando}
+                    style={({ pressed }) => [styles.botao, (pressed || enviando) && styles.botaoPress]}>
+                    <Text style={styles.botaoText}>{enviando ? 'Entrando…' : 'Entrar'}</Text>
+                    <Ionicons name="arrow-forward" size={18} color={Brand.onPrimary} />
+                  </Pressable>
 
-              <Pressable hitSlop={8} style={styles.linkWrap}>
-                <Text style={styles.link}>Esqueci minha senha</Text>
-              </Pressable>
+                  <Pressable hitSlop={8} style={styles.linkWrap} onPress={apiAtiva ? irParaPrimeiroAcesso : undefined}>
+                    <Text style={styles.link}>{apiAtiva ? 'Primeiro acesso? Cadastrar senha' : 'Esqueci minha senha'}</Text>
+                  </Pressable>
+                </>
+              ) : etapa === 'cpf' ? (
+                <>
+                  <Text style={styles.cardTitle}>Primeiro acesso</Text>
+                  <Text style={styles.cardSub}>Confirme seu CPF para cadastrar sua senha.</Text>
+
+                  <View style={styles.inputRow}>
+                    <Ionicons name="card-outline" size={20} color={C.textDim} />
+                    <TextInput
+                      value={identificador}
+                      onChangeText={(t) => {
+                        setIdentificador(t);
+                        setErro('');
+                      }}
+                      placeholder="CPF"
+                      placeholderTextColor={C.placeholder}
+                      keyboardType="numbers-and-punctuation"
+                      autoCapitalize="none"
+                      style={styles.input}
+                      onSubmitEditing={verificarCpf}
+                    />
+                  </View>
+
+                  {erro ? <Text style={styles.erro}>{erro}</Text> : null}
+
+                  <Pressable
+                    onPress={verificarCpf}
+                    disabled={enviando}
+                    style={({ pressed }) => [styles.botao, (pressed || enviando) && styles.botaoPress]}>
+                    <Text style={styles.botaoText}>{enviando ? 'Verificando…' : 'Continuar'}</Text>
+                    <Ionicons name="arrow-forward" size={18} color={Brand.onPrimary} />
+                  </Pressable>
+
+                  <Pressable hitSlop={8} style={styles.linkWrap} onPress={voltarParaLogin}>
+                    <Text style={styles.link}>Voltar para o login</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.cardTitle}>Olá, {nomeRm.split(' ')[0]}</Text>
+                  <Text style={styles.cardSub}>Crie uma senha para acessar o app.</Text>
+
+                  <View style={styles.inputRow}>
+                    <Ionicons name="lock-closed-outline" size={20} color={C.textDim} />
+                    <TextInput
+                      value={novaSenha}
+                      onChangeText={(t) => {
+                        setNovaSenha(t);
+                        setErro('');
+                      }}
+                      placeholder="Nova senha (mín. 6)"
+                      placeholderTextColor={C.placeholder}
+                      secureTextEntry={!verSenha}
+                      style={styles.input}
+                    />
+                    <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8}>
+                      <Ionicons name={verSenha ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.textDim} />
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.inputRow}>
+                    <Ionicons name="lock-closed-outline" size={20} color={C.textDim} />
+                    <TextInput
+                      value={confirma}
+                      onChangeText={(t) => {
+                        setConfirma(t);
+                        setErro('');
+                      }}
+                      placeholder="Confirmar senha"
+                      placeholderTextColor={C.placeholder}
+                      secureTextEntry={!verSenha}
+                      style={styles.input}
+                      onSubmitEditing={definirSenha}
+                    />
+                  </View>
+
+                  {erro ? <Text style={styles.erro}>{erro}</Text> : null}
+
+                  <Pressable
+                    onPress={definirSenha}
+                    disabled={enviando}
+                    style={({ pressed }) => [styles.botao, (pressed || enviando) && styles.botaoPress]}>
+                    <Text style={styles.botaoText}>{enviando ? 'Salvando…' : 'Definir senha e entrar'}</Text>
+                    <Ionicons name="arrow-forward" size={18} color={Brand.onPrimary} />
+                  </Pressable>
+
+                  <Pressable hitSlop={8} style={styles.linkWrap} onPress={voltarParaLogin}>
+                    <Text style={styles.link}>Voltar para o login</Text>
+                  </Pressable>
+                </>
+              )}
             </View>
             </TiltCard>
 
