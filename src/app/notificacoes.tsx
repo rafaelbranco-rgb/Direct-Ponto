@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 
@@ -23,6 +24,7 @@ import {
 export default function Notificacoes() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const escuro = useColorScheme() === 'dark';
   const { usuario } = useAuth();
 
@@ -57,7 +59,7 @@ export default function Notificacoes() {
         <FlatList
           data={itens}
           keyExtractor={(n) => n.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: Spacing.three + insets.bottom }]}
           renderItem={({ item }) => (
             <Pressable
               onPress={() =>

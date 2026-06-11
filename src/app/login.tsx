@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -76,6 +77,12 @@ export default function Login() {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView
+            style={styles.flex}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            bounces={false}>
           <View style={styles.container}>
             {/* Marca */}
             <View style={styles.brand}>
@@ -162,6 +169,7 @@ export default function Login() {
 
             <Text style={styles.footer}>{Brand.companyFull}</Text>
           </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -172,9 +180,12 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Brand.navy },
   flex: { flex: 1 },
   glow: { position: 'absolute', top: -120, left: -80, width: 360, height: 360, borderRadius: 360 },
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingVertical: Spacing.five,
+  },
+  container: {
     gap: Spacing.five,
     paddingHorizontal: Spacing.four,
     width: '100%',

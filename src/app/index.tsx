@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
@@ -27,6 +28,7 @@ import {
 
 export default function CaixaDeEntrada() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { usuario } = useAuth();
   const [busca, setBusca] = useState('');
   const [drawer, setDrawer] = useState(false);
@@ -89,7 +91,7 @@ export default function CaixaDeEntrada() {
         <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar categoria" />
       </BrandHeader>
 
-      <Animated.View style={styles.corpo} entering={FadeInDown.duration(320)}>
+      <Animated.View style={[styles.corpo, { paddingBottom: Spacing.three + insets.bottom }]} entering={FadeInDown.duration(320)}>
         <GlassSurface style={styles.cartao}>
           <FlatList
             data={categorias}

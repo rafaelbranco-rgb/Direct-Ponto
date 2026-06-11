@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 
@@ -28,6 +29,7 @@ const FILTROS: { chave: Filtro; label: string }[] = [
 export default function Pedidos() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { usuario } = useAuth();
   const [filtro, setFiltro] = useState<Filtro>('TODOS');
 
@@ -82,7 +84,7 @@ export default function Pedidos() {
         <FlatList
           data={lista}
           keyExtractor={(p) => p.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: Spacing.three + insets.bottom }]}
           ItemSeparatorComponent={() => <View style={styles.sep} />}
           renderItem={({ item }) => (
             <TiltCard max={3}>

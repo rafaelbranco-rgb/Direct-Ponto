@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -57,6 +58,7 @@ function primeiroNome(nomeCompleto: string) {
 export default function ChatCategoria() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { usuario } = useAuth();
   const { codigo } = useLocalSearchParams<{ codigo: string }>();
 
@@ -315,7 +317,7 @@ export default function ChatCategoria() {
           )}
 
           {/* Composer de vidro */}
-          <View style={styles.composerWrap}>
+          <View style={[styles.composerWrap, { paddingBottom: Spacing.three + insets.bottom }]}>
             <GlassSurface style={styles.composer}>
               <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
                 <Ionicons name="attach" size={22} color={theme.textSecondary} />
