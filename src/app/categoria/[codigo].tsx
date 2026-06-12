@@ -403,7 +403,10 @@ export default function ChatCategoria() {
           end={{ x: 1, y: 1 }}>
           <SafeAreaView edges={['top']}>
             <View style={styles.headerRow}>
-              <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+              <Pressable
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+              hitSlop={12}
+              style={styles.backBtn}>
                 <Ionicons name="chevron-back" size={24} color={Brand.onPrimary} />
               </Pressable>
               <View style={styles.headerCenter}>
