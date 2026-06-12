@@ -459,7 +459,7 @@ export default function ChatCategoria() {
                   placeholder="Mensagem"
                   placeholderTextColor={theme.textSecondary}
                   style={[styles.input, { color: theme.text }]}
-                  multiline
+                  returnKeyType="send"
                   onSubmitEditing={enviar}
                 />
               </View>
@@ -611,9 +611,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: Spacing.two,
-    paddingRight: Spacing.one,
-    paddingVertical: Spacing.one,
-    borderRadius: 26,
+    paddingRight: Spacing.half,
+    paddingVertical: Spacing.half,
+    borderRadius: 22,
   },
   clip: {
     width: 30,
@@ -626,19 +626,17 @@ const styles = StyleSheet.create({
   inputWrap: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
   input: {
     width: '100%',
-    fontSize: 15.5,
-    lineHeight: 20,
-    minHeight: 20,
-    maxHeight: 100,
-    paddingVertical: 9,
-    paddingHorizontal: 2,
+    height: 34,
+    fontSize: 15,
+    paddingVertical: 0,
+    paddingHorizontal: 4,
     textAlignVertical: 'center',
     ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
   },
   enviar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     marginLeft: Spacing.one,
     flexShrink: 0,
     alignItems: 'center',
