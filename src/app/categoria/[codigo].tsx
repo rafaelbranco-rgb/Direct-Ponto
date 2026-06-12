@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
@@ -105,6 +106,9 @@ export default function ChatCategoria() {
   // Modo backend: id do chamado real (null enquanto a triagem não abriu o chamado).
   const [chamadoId, setChamadoId] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Largura da janela: usada para travar o conteúdo na largura visível e evitar
+  // que algum overflow horizontal empurre o composer para fora da tela.
+  const { width: larguraJanela } = useWindowDimensions();
 
   const seq = useRef(1000);
   const listaRef = useRef<FlatList<Mensagem>>(null);
@@ -392,39 +396,35 @@ export default function ChatCategoria() {
       entering={FadeInRight.springify().damping(16).stiffness(110).mass(0.9)}>
       <ScreenBackground />
 
-      <LinearGradient
-        colors={Brand.headerGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.headerRow}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-              <Ionicons name="chevron-back" size={24} color={Brand.onPrimary} />
-            </Pressable>
-            <View style={styles.headerCenter}>
-              <View style={styles.titleLine}>
-                <Ionicons
-                  name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
-                  size={17}
-                  color={Brand.accent}
-                />
+      <View style={styles.header}>
+        <LinearGradient
+          colors={Brand.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}>
+          <SafeAreaView edges={['top']}>
+            <View style={styles.headerRow}>
+              <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+                <Ionicons name="chevron-back" size={24} color={Brand.onPrimary} />
+              </Pressable>
+              <View style={styles.headerCenter}>
                 <Text style={styles.titleText} numberOfLines={1}>
                   {categoria?.label ?? 'Atendimento'}
                 </Text>
+                <Text style={styles.subtitleText} numberOfLines={1}>
+                  Justificativa de ponto
+                </Text>
               </View>
-              <Text style={styles.subtitleText} numberOfLines={1}>
-                Justificativa de ponto
-              </Text>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+        {/* Fio dourado da marca (View sólida, sempre visível) */}
+        <View style={styles.goldLine} />
+      </View>
 
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.centro}>
+        <View style={[styles.centro, { maxWidth: Math.min(larguraJanela, MaxContentWidth) }]}>
           <FlatList
             ref={listaRef}
             data={mensagens}
@@ -452,15 +452,17 @@ export default function ChatCategoria() {
               <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
                 <Ionicons name="add-circle-outline" size={24} color={theme.textSecondary} />
               </Pressable>
-              <TextInput
-                value={texto}
-                onChangeText={setTexto}
-                placeholder="Mensagem"
-                placeholderTextColor={theme.textSecondary}
-                style={[styles.input, { color: theme.text }]}
-                multiline
-                onSubmitEditing={enviar}
-              />
+              <View style={styles.inputWrap}>
+                <TextInput
+                  value={texto}
+                  onChangeText={setTexto}
+                  placeholder="Mensagem"
+                  placeholderTextColor={theme.textSecondary}
+                  style={[styles.input, { color: theme.text }]}
+                  multiline
+                  onSubmitEditing={enviar}
+                />
+              </View>
               <Pressable
                 onPress={enviar}
                 disabled={!texto.trim() || enviando}
@@ -507,9 +509,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
 
   header: {
-    // Barra plana (cantos retos) com um fio dourado da marca embaixo.
-    borderBottomWidth: 2,
-    borderBottomColor: Brand.accent,
+    // Barra plana (cantos retos); o fio dourado é uma View sólida embaixo.
     ...Platform.select({
       web: { boxShadow: '0 4px 14px rgba(11,18,32,0.18)' } as object,
       default: {
@@ -521,6 +521,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  goldLine: { height: 3, backgroundColor: Brand.accent },
   headerRow: {
     position: 'relative',
     justifyContent: 'center',
@@ -543,12 +544,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerCenter: { alignItems: 'center', gap: 2 },
-  titleLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   titleText: {
     color: Brand.onPrimary,
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 0.3,
     textAlign: 'center',
   },
   subtitleText: {
@@ -557,9 +556,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Wrapper central único (evita overflow à direita no web ao centralizar
-  // cada elemento separadamente).
-  centro: { flex: 1, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
+  // Coluna central travada na largura visível (maxWidth aplicado inline com a
+  // largura da janela) para nenhum overflow empurrar o composer para fora.
+  centro: { flex: 1, width: '100%', alignSelf: 'center', overflow: 'hidden' },
   lista: {
     padding: Spacing.three,
     gap: Spacing.two,
@@ -607,27 +606,31 @@ const styles = StyleSheet.create({
   composerWrap: {
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
-    width: '100%',
-    maxWidth: 620,
-    alignSelf: 'center',
   },
   composer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.one,
     paddingLeft: Spacing.two,
-    paddingRight: Spacing.half,
-    paddingVertical: Spacing.half,
+    paddingRight: Spacing.one,
+    paddingVertical: Spacing.one,
     borderRadius: 26,
   },
-  clip: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  clip: {
+    width: 30,
+    height: 30,
+    marginRight: Spacing.one,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputWrap: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
   input: {
-    flex: 1,
+    width: '100%',
     fontSize: 15.5,
     lineHeight: 20,
     minHeight: 20,
     maxHeight: 100,
-    paddingVertical: 10,
+    paddingVertical: 9,
     paddingHorizontal: 2,
     textAlignVertical: 'center',
     ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
@@ -636,6 +639,8 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
+    marginLeft: Spacing.one,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
