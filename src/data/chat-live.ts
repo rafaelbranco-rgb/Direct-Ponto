@@ -88,7 +88,7 @@ export function parseDataOcorrencia(texto: string | undefined): string {
 
 /** Monta um resumo curto das respostas da triagem para o atendente ler no chat. */
 export function resumoTriagem(respostas: Record<string, string>): string {
-  const linhas: string[] = [];
+  const linhas: string[] = ['📋 Resumo da justificativa'];
   if (respostas.data) linhas.push(`📅 Data: ${respostas.data}`);
   if (respostas.horario) linhas.push(`⏰ Horário correto: ${respostas.horario}`);
   if (respostas.descricao) linhas.push(`📝 Motivo: ${respostas.descricao}`);

@@ -21,6 +21,7 @@ import { Brand } from '@/constants/brand';
 import { Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { api, apiAtiva } from '@/data/api';
+import { pedirPermissaoNotificacao } from '@/data/notifications';
 
 /**
  * Paleta fixa do login (sempre navy + vidro), independente do tema do app —
@@ -69,6 +70,7 @@ export default function Login() {
       setErro('');
       try {
         await entrarApi(identificador.trim(), senha);
+        pedirPermissaoNotificacao();
         router.replace('/');
       } catch (e) {
         setErro(e instanceof Error ? e.message : 'Não foi possível entrar.');
@@ -118,6 +120,7 @@ export default function Login() {
     try {
       const r = await api.definirSenha(identificador.trim(), novaSenha);
       aplicarSessao(r.token, r.usuario);
+      pedirPermissaoNotificacao();
       router.replace('/');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível definir a senha.');

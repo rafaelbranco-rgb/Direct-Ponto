@@ -65,6 +65,28 @@ function primeiroNome(nomeCompleto: string) {
   return partes.length <= 2 ? nomeCompleto : `${partes[0]} ${partes[1]}`;
 }
 
+/** Valida respostas da triagem que exigem formato. Devolve a mensagem de erro ou null. */
+function validarResposta(chave: string, texto: string): string | null {
+  const t = texto.trim();
+  if (chave === 'data') {
+    const m = t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+    if (!m) return 'Para continuar, informe a data no formato DD/MM/AAAA (ex.: 08/06/2026).';
+    const dia = Number(m[1]);
+    const mes = Number(m[2]);
+    if (dia < 1 || dia > 31 || mes < 1 || mes > 12) {
+      return 'Essa data não parece válida. Use DD/MM/AAAA (ex.: 08/06/2026).';
+    }
+  }
+  if (chave === 'horario') {
+    const m = t.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return 'Informe o horário no formato HH:MM (ex.: 08:00).';
+    if (Number(m[1]) > 23 || Number(m[2]) > 59) {
+      return 'Esse horário não é válido. Use HH:MM (ex.: 08:00).';
+    }
+  }
+  return null;
+}
+
 export default function ChatCategoria() {
   const router = useRouter();
   const theme = useTheme();
@@ -228,9 +250,18 @@ export default function ChatCategoria() {
     }
     if (passo.tipo === 'texto' && !textoResp) return;
 
+    // Valida data/horário: se vier errado, pede de novo (não avança).
+    if (passo.tipo === 'texto') {
+      const erro = validarResposta(passo.chave, textoResp ?? '');
+      if (erro) {
+        addAtendente(erro);
+        return;
+      }
+    }
+
     // Guarda a resposta para virar campo do chamado / resumo no backend.
     if (passo.tipo === 'anexo' && anexo) anexoTriagemRef.current = anexo;
-    else respostasRef.current[passo.chave] = textoResp ?? '';
+    else respostasRef.current[passo.chave] = (textoResp ?? '').trim();
 
     const prox = passoIdx + 1;
     if (prox < passos.length) {
