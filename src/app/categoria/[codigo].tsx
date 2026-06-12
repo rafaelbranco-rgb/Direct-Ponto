@@ -399,20 +399,20 @@ export default function ChatCategoria() {
         style={styles.header}>
         <SafeAreaView edges={['top']}>
           <View style={styles.headerRow}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.iconBtn}>
-              <Ionicons name="chevron-back" size={22} color={Brand.onPrimary} />
+            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={24} color={Brand.onPrimary} />
             </Pressable>
-            <View style={styles.headerBadge}>
-              <Ionicons
-                name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
-                size={19}
-                color={Brand.onPrimary}
-              />
-            </View>
-            <View style={styles.headerTitles}>
-              <Text style={styles.titleText} numberOfLines={1}>
-                {categoria?.label ?? 'Atendimento'}
-              </Text>
+            <View style={styles.headerCenter}>
+              <View style={styles.titleLine}>
+                <Ionicons
+                  name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
+                  size={17}
+                  color={Brand.accent}
+                />
+                <Text style={styles.titleText} numberOfLines={1}>
+                  {categoria?.label ?? 'Atendimento'}
+                </Text>
+              </View>
               <Text style={styles.subtitleText} numberOfLines={1}>
                 Justificativa de ponto
               </Text>
@@ -522,37 +522,40 @@ const styles = StyleSheet.create({
     }),
   },
   headerRow: {
-    flexDirection: 'row',
+    position: 'relative',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: Spacing.three,
+    minHeight: 50,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: 56,
     paddingTop: Spacing.one,
-    paddingBottom: Spacing.three,
+    paddingBottom: Spacing.two,
   },
-  iconBtn: {
+  backBtn: {
+    position: 'absolute',
+    left: Spacing.three,
+    top: 0,
+    bottom: 0,
     width: 36,
-    height: 36,
-    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  headerBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.28)',
+  headerCenter: { alignItems: 'center', gap: 2 },
+  titleLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  titleText: {
+    color: Brand.onPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
-  headerTitles: { flex: 1, gap: 1 },
-  titleText: { color: Brand.onPrimary, fontSize: 18, fontWeight: '700', letterSpacing: 0.2 },
-  subtitleText: { color: 'rgba(255,255,255,0.74)', fontSize: 12.5 },
+  subtitleText: {
+    color: 'rgba(255,255,255,0.72)',
+    fontSize: 12,
+    textAlign: 'center',
+  },
 
   // Wrapper central único (evita overflow à direita no web ao centralizar
   // cada elemento separadamente).
@@ -615,16 +618,18 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.two,
     paddingRight: Spacing.half,
     paddingVertical: Spacing.half,
-    borderRadius: 24,
+    borderRadius: 26,
   },
   clip: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   input: {
     flex: 1,
     fontSize: 15.5,
     lineHeight: 20,
-    maxHeight: 110,
-    minHeight: 22,
-    paddingVertical: Platform.OS === 'web' ? 8 : 4,
+    minHeight: 20,
+    maxHeight: 100,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
+    textAlignVertical: 'center',
     ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
   },
   enviar: {
