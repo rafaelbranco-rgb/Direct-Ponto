@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { api, apiAtiva, setToken, type UsuarioApi } from '@/data/api';
+import { conectarNotificacoes, desconectarNotificacoes } from '@/data/socket-global';
+import { pedirPermissaoNotificacao } from '@/data/notifications';
 
 export type Usuario = {
   id?: string;
@@ -52,6 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       vivo = false;
     };
   }, []);
+
+  // Notificações em tempo real: conecta o socket global quando há colaborador
+  // logado e desconecta ao sair.
+  useEffect(() => {
+    if (!apiAtiva) return;
+    if (usuario) {
+      pedirPermissaoNotificacao();
+      conectarNotificacoes();
+    } else {
+      desconectarNotificacoes();
+    }
+  }, [usuario]);
 
   function entrar(u: Usuario) {
     setUsuario(u);
