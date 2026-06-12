@@ -507,16 +507,17 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
 
   header: {
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
+    // Barra plana (cantos retos) com um fio dourado da marca embaixo.
+    borderBottomWidth: 2,
+    borderBottomColor: Brand.accent,
     ...Platform.select({
-      web: { boxShadow: '0 6px 20px rgba(11,18,32,0.22)' } as object,
+      web: { boxShadow: '0 4px 14px rgba(11,18,32,0.18)' } as object,
       default: {
         shadowColor: '#000',
-        shadowOpacity: 0.18,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 5 },
-        elevation: 5,
+        shadowOpacity: 0.16,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
       },
     }),
   },
