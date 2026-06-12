@@ -115,9 +115,17 @@ export default function Pedidos() {
           contentContainerStyle={[styles.listContent, { paddingBottom: Spacing.three + insets.bottom }]}
           ItemSeparatorComponent={() => <View style={styles.sep} />}
           renderItem={({ item }) => (
-            <TiltCard max={3}>
-              <PedidoCard pedido={item} />
-            </TiltCard>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/categoria/[codigo]',
+                  params: { codigo: item.categoria, id: item.id },
+                })
+              }>
+              <TiltCard max={3}>
+                <PedidoCard pedido={item} />
+              </TiltCard>
+            </Pressable>
           )}
           ListEmptyComponent={
             <View style={styles.vazio}>

@@ -70,7 +70,7 @@ export default function ChatCategoria() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { usuario } = useAuth();
-  const { codigo } = useLocalSearchParams<{ codigo: string }>();
+  const { codigo, id } = useLocalSearchParams<{ codigo: string; id?: string }>();
 
   const categoria = categoriaPorCodigo(codigo ?? '');
   const cod = (categoria?.codigo ?? 'ATRASO') as CategoriaCodigo;
@@ -132,26 +132,28 @@ export default function ChatCategoria() {
     setMensagens((prev) => mesclarMensagens(prev, [mapMensagem(m)]));
   }, []);
 
-  // Ao abrir a tela no modo backend, busca um chamado já aberto desta categoria.
+  // Ao abrir a tela no modo backend: se veio um id (toque em "Meus Pedidos"),
+  // abre ESSE chamado; senão, busca um chamado já aberto desta categoria.
   useEffect(() => {
     if (!apiAtiva) return;
     let vivo = true;
-    acharChamadoAberto(cod)
-      .then(async (c) => {
-        if (!vivo || !c) return;
-        const det = await api.detalhe(c.id);
+    (async () => {
+      try {
+        const alvo = id ?? (await acharChamadoAberto(cod))?.id;
+        if (!vivo || !alvo) return;
+        const det = await api.detalhe(alvo);
         if (!vivo) return;
-        setChamadoId(c.id);
+        setChamadoId(det.id);
         setTriada(true);
         setMensagens((det.mensagens ?? []).map(mapMensagem));
-      })
-      .catch(() => {
-        /* sem chamado aberto → a triagem segue normalmente */
-      });
+      } catch {
+        /* sem chamado → a triagem segue normalmente */
+      }
+    })();
     return () => {
       vivo = false;
     };
-  }, [cod]);
+  }, [cod, id]);
 
   // Conecta na sala do chamado para receber respostas do atendente em tempo real.
   useEffect(() => {
