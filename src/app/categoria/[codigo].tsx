@@ -10,14 +10,14 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
-import { BrandHeader } from '@/components/brand-header';
 import { GlassSurface } from '@/components/glass';
 import { ScreenBackground } from '@/components/screen-bg';
 import { ThemedText } from '@/components/themed-text';
@@ -75,7 +75,12 @@ export default function ChatCategoria() {
   const cod = (categoria?.codigo ?? 'ATRASO') as CategoriaCodigo;
   const nomeColaborador = usuario?.nome ?? 'Você';
 
-  const conversaInicial = getConversa(cod, nomeColaborador);
+  // No modo backend a conversa vem do servidor (carregada no efeito abaixo); o
+  // mock só vale na demonstração. Sem isso, categorias com conversa fixa (ex.:
+  // ATRASO) abririam "triadas" sem chamado real e o envio não iria ao backend.
+  const conversaInicial = apiAtiva
+    ? { categoria: cod, remetente: nomeColaborador, triada: false, mensagens: [] as Mensagem[] }
+    : getConversa(cod, nomeColaborador);
   const passos = passosTriagem(cod);
 
   // Mensagem inicial da triagem é calculada já no estado inicial (sem setState
@@ -387,21 +392,34 @@ export default function ChatCategoria() {
       entering={FadeInRight.springify().damping(16).stiffness(110).mass(0.9)}>
       <ScreenBackground />
 
-      <BrandHeader>
-        <View style={styles.headerRow}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Ionicons name="chevron-back" size={26} color={Brand.onPrimary} />
-          </Pressable>
-          <Ionicons
-            name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
-            size={22}
-            color={Brand.onPrimary}
-          />
-          <Text style={styles.titleText} numberOfLines={1}>
-            {categoria?.label ?? 'Atendimento'}
-          </Text>
-        </View>
-      </BrandHeader>
+      <LinearGradient
+        colors={Brand.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.headerRow}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.iconBtn}>
+              <Ionicons name="chevron-back" size={22} color={Brand.onPrimary} />
+            </Pressable>
+            <View style={styles.headerBadge}>
+              <Ionicons
+                name={(categoria?.icone ?? 'chatbubble-outline') as keyof typeof Ionicons.glyphMap}
+                size={19}
+                color={Brand.onPrimary}
+              />
+            </View>
+            <View style={styles.headerTitles}>
+              <Text style={styles.titleText} numberOfLines={1}>
+                {categoria?.label ?? 'Atendimento'}
+              </Text>
+              <Text style={styles.subtitleText} numberOfLines={1}>
+                Justificativa de ponto
+              </Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -432,7 +450,7 @@ export default function ChatCategoria() {
           <View style={[styles.composerWrap, { paddingBottom: Spacing.three + insets.bottom }]}>
             <GlassSurface style={styles.composer}>
               <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
-                <Ionicons name="attach" size={22} color={theme.textSecondary} />
+                <Ionicons name="add-circle-outline" size={24} color={theme.textSecondary} />
               </Pressable>
               <TextInput
                 value={texto}
@@ -448,9 +466,9 @@ export default function ChatCategoria() {
                 disabled={!texto.trim() || enviando}
                 style={[
                   styles.enviar,
-                  { backgroundColor: Brand.primary, opacity: texto.trim() && !enviando ? 1 : 0.4 },
+                  { backgroundColor: Brand.primary, opacity: texto.trim() && !enviando ? 1 : 0.45 },
                 ]}>
-                <Ionicons name="send" size={18} color={Brand.onPrimary} />
+                <Ionicons name="send" size={16} color={Brand.onPrimary} />
               </Pressable>
             </GlassSurface>
           </View>
@@ -487,8 +505,53 @@ function BotaoAnexo({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   flex: { flex: 1 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  titleText: { color: Brand.onPrimary, fontSize: 20, fontWeight: '700', flex: 1 },
+
+  header: {
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    ...Platform.select({
+      web: { boxShadow: '0 6px 20px rgba(11,18,32,0.22)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.18,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 5 },
+        elevation: 5,
+      },
+    }),
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.three,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  headerBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.28)',
+  },
+  headerTitles: { flex: 1, gap: 1 },
+  titleText: { color: Brand.onPrimary, fontSize: 18, fontWeight: '700', letterSpacing: 0.2 },
+  subtitleText: { color: 'rgba(255,255,255,0.74)', fontSize: 12.5 },
 
   // Wrapper central único (evita overflow à direita no web ao centralizar
   // cada elemento separadamente).
@@ -539,28 +602,34 @@ const styles = StyleSheet.create({
 
   composerWrap: {
     paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.three,
+    paddingTop: Spacing.two,
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
   },
   composer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-    borderRadius: 28,
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingLeft: Spacing.two,
+    paddingRight: Spacing.half,
+    paddingVertical: Spacing.half,
+    borderRadius: 24,
   },
-  clip: { paddingBottom: 8, paddingLeft: 4 },
+  clip: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   input: {
     flex: 1,
-    fontSize: 16,
-    maxHeight: 120,
-    minHeight: 40,
-    paddingVertical: Spacing.two,
+    fontSize: 15.5,
+    lineHeight: 20,
+    maxHeight: 110,
+    minHeight: 22,
+    paddingVertical: Platform.OS === 'web' ? 8 : 4,
+    ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
   },
   enviar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
