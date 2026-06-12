@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -35,6 +35,15 @@ import {
   type AnexoMsg,
   type Mensagem,
 } from '@/data/chat';
+import { api, apiAtiva, ApiError, type MensagemApi } from '@/data/api';
+import {
+  acharChamadoAberto,
+  conectarChat,
+  mapMensagem,
+  mesclarMensagens,
+  parseDataOcorrencia,
+  resumoTriagem,
+} from '@/data/chat-live';
 import { marcarCategoriaLida, pedirPermissaoNotificacao } from '@/data/notifications';
 import type { CategoriaCodigo } from '@/data/types';
 
@@ -88,18 +97,58 @@ export default function ChatCategoria() {
   const [passoIdx, setPassoIdx] = useState(0);
   const [texto, setTexto] = useState('');
   const [menuAnexo, setMenuAnexo] = useState(false);
+  // Modo backend: id do chamado real (null enquanto a triagem não abriu o chamado).
+  const [chamadoId, setChamadoId] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
   const seq = useRef(1000);
   const listaRef = useRef<FlatList<Mensagem>>(null);
+  // Respostas estruturadas da triagem (viram os campos do chamado).
+  const respostasRef = useRef<Record<string, string>>({});
+  const anexoTriagemRef = useRef<AnexoMsg | null>(null);
 
   function nid() {
     seq.current += 1;
     return `x-${seq.current}`;
   }
 
+  // Persiste no mock só no modo demonstração (no backend a fonte é o servidor).
   useEffect(() => {
+    if (apiAtiva) return;
     salvarConversa({ categoria: cod, remetente: conversaInicial.remetente, triada, mensagens });
   }, [cod, conversaInicial.remetente, mensagens, triada]);
+
+  // Recebe uma mensagem do backend (via socket ou retorno de envio), sem duplicar.
+  const receber = useCallback((m: MensagemApi) => {
+    setMensagens((prev) => mesclarMensagens(prev, [mapMensagem(m)]));
+  }, []);
+
+  // Ao abrir a tela no modo backend, busca um chamado já aberto desta categoria.
+  useEffect(() => {
+    if (!apiAtiva) return;
+    let vivo = true;
+    acharChamadoAberto(cod)
+      .then(async (c) => {
+        if (!vivo || !c) return;
+        const det = await api.detalhe(c.id);
+        if (!vivo) return;
+        setChamadoId(c.id);
+        setTriada(true);
+        setMensagens((det.mensagens ?? []).map(mapMensagem));
+      })
+      .catch(() => {
+        /* sem chamado aberto → a triagem segue normalmente */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [cod]);
+
+  // Conecta na sala do chamado para receber respostas do atendente em tempo real.
+  useEffect(() => {
+    if (!apiAtiva || !chamadoId) return;
+    return conectarChat(chamadoId, receber);
+  }, [chamadoId, receber]);
 
   // Ao abrir o atendimento, marca as notificações desta categoria como lidas.
   useEffect(() => {
@@ -114,7 +163,43 @@ export default function ChatCategoria() {
   const addAtendente = (texto: string) => add({ autor: 'ATENDENTE', texto, horario: agora() });
   const addSistema = (texto: string, data: string) => add({ autor: 'SISTEMA', texto, data });
 
+  /** No backend: abre o chamado de verdade e envia o resumo da triagem + anexo. */
+  async function abrirChamadoBackend() {
+    const r = respostasRef.current;
+    try {
+      setEnviando(true);
+      const chamado = await api.abrirChamado({
+        categoria: cod,
+        dataOcorrencia: parseDataOcorrencia(r.data),
+        horarioProposto: r.horario || undefined,
+        descricao: r.descricao || undefined,
+      });
+      setChamadoId(chamado.id);
+      setTriada(true);
+      setMensagens((chamado.mensagens ?? []).map(mapMensagem));
+
+      const resumo = resumoTriagem(r);
+      if (resumo) receber(await api.enviarMensagem(chamado.id, resumo));
+      const anexo = anexoTriagemRef.current;
+      if (anexo) {
+        receber(await api.enviarMensagem(chamado.id, '', { nome: anexo.nome, ehImagem: anexo.ehImagem }));
+      }
+    } catch (e) {
+      addAtendente(
+        e instanceof ApiError
+          ? `Não consegui abrir o atendimento: ${e.message}`
+          : 'Falha ao abrir o atendimento. Verifique a conexão e tente novamente.',
+      );
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   function finalizarTriagem() {
+    if (apiAtiva) {
+      abrirChamadoBackend();
+      return;
+    }
     addSistema(`Protocolo ${novoProtocolo()} — Atendimento solicitado`, dataHoraAgora());
     addAtendente('Recebemos sua solicitação. Em breve um responsável dará retorno por aqui.');
     setTriada(true);
@@ -132,12 +217,36 @@ export default function ChatCategoria() {
     }
     if (passo.tipo === 'texto' && !textoResp) return;
 
+    // Guarda a resposta para virar campo do chamado / resumo no backend.
+    if (passo.tipo === 'anexo' && anexo) anexoTriagemRef.current = anexo;
+    else respostasRef.current[passo.chave] = textoResp ?? '';
+
     const prox = passoIdx + 1;
     if (prox < passos.length) {
       setPassoIdx(prox);
       addAtendente(passos[prox].pergunta);
     } else {
       finalizarTriagem();
+    }
+  }
+
+  /** Envia uma mensagem ao backend e exibe o retorno (o socket também ecoa). */
+  async function enviarApi(t: string, anexo?: AnexoMsg) {
+    if (!chamadoId) return;
+    try {
+      setEnviando(true);
+      const m = await api.enviarMensagem(
+        chamadoId,
+        t,
+        anexo ? { nome: anexo.nome, ehImagem: anexo.ehImagem } : undefined,
+      );
+      receber(m);
+    } catch (e) {
+      addAtendente(
+        e instanceof ApiError ? `Não consegui enviar: ${e.message}` : 'Falha ao enviar a mensagem.',
+      );
+    } finally {
+      setEnviando(false);
     }
   }
 
@@ -149,6 +258,8 @@ export default function ChatCategoria() {
     setMenuAnexo(false);
     if (!triada) {
       responderTriagem(t);
+    } else if (apiAtiva) {
+      enviarApi(t);
     } else {
       addColaborador(t);
       agendarRespostaAtendente(cod, categoria?.label ?? 'Ponto');
@@ -158,6 +269,7 @@ export default function ChatCategoria() {
   function aoAnexar(anexo: AnexoMsg) {
     setMenuAnexo(false);
     if (!triada) responderTriagem(undefined, anexo);
+    else if (apiAtiva) enviarApi('', anexo);
     else addColaborador('', anexo);
   }
 
@@ -333,8 +445,11 @@ export default function ChatCategoria() {
               />
               <Pressable
                 onPress={enviar}
-                disabled={!texto.trim()}
-                style={[styles.enviar, { backgroundColor: Brand.primary, opacity: texto.trim() ? 1 : 0.4 }]}>
+                disabled={!texto.trim() || enviando}
+                style={[
+                  styles.enviar,
+                  { backgroundColor: Brand.primary, opacity: texto.trim() && !enviando ? 1 : 0.4 },
+                ]}>
                 <Ionicons name="send" size={18} color={Brand.onPrimary} />
               </Pressable>
             </GlassSurface>
