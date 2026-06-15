@@ -58,9 +58,11 @@ export async function acharChamadoAberto(categoria: CategoriaCodigo): Promise<Ch
   const { meus } = await api.meusChamados();
   const daCategoria = meus.filter((c) => c.categoria === categoria);
   if (daCategoria.length === 0) return null;
-  // `meusChamados` já vem ordenado por mais recente; prioriza os não resolvidos.
-  const aberto = daCategoria.find((c) => !RESOLVIDO.includes(c.status));
-  return aberto ?? daCategoria[0];
+  // `meusChamados` já vem ordenado por mais recente. Só reaproveita um chamado
+  // que ainda esteja ABERTO (pendente/em atendimento). Se o mais recente já foi
+  // finalizado pelo atendente (aprovado/recusado), retorna null para que a tela
+  // inicie uma triagem nova e abra OUTRO chamado — em vez de reabrir o encerrado.
+  return daCategoria.find((c) => !RESOLVIDO.includes(c.status)) ?? null;
 }
 
 /**
