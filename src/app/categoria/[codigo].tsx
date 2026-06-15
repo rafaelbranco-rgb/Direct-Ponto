@@ -129,25 +129,32 @@ export default function ChatCategoria() {
     : getConversa(cod, nomeColaborador);
   const passos = passosTriagem(cod);
 
+  // Monta a mensagem de boas-vindas + 1ª pergunta da triagem (reusada também ao
+  // tocar em "Nova solicitação" depois de um chamado finalizado).
+  function montarBoasVindas(): Mensagem[] {
+    if (passos.length === 0) return [];
+    const nm = (usuario?.nome ?? '').trim().split(/\s+/)[0];
+    const primeiro = nm ? nm.charAt(0).toUpperCase() + nm.slice(1).toLowerCase() : '';
+    const saudacao = primeiro ? `Olá, ${primeiro}! 👋` : 'Olá! 👋';
+    const qtd = passos.length;
+    return [
+      {
+        id: 'sys-bem-vindo',
+        autor: 'ATENDENTE',
+        texto:
+          `${saudacao} Vou te ajudar a registrar sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
+          `É bem rápido: vou fazer ${qtd} ${qtd === 1 ? 'pergunta' : 'perguntas'}, uma de cada vez — ` +
+          `basta responder cada uma aqui no chat. Se errar algo, é só me dizer.\n\n${passos[0].pergunta}`,
+        horario: agora(),
+      },
+    ];
+  }
+
   // Mensagem inicial da triagem é calculada já no estado inicial (sem setState
   // dentro de efeito — exigência do React Compiler).
   const [mensagens, setMensagens] = useState<Mensagem[]>(() => {
     if (!conversaInicial.triada && conversaInicial.mensagens.length === 0 && passos.length > 0) {
-      const nm = (usuario?.nome ?? '').trim().split(/\s+/)[0];
-      const primeiro = nm ? nm.charAt(0).toUpperCase() + nm.slice(1).toLowerCase() : '';
-      const saudacao = primeiro ? `Olá, ${primeiro}! 👋` : 'Olá! 👋';
-      const qtd = passos.length;
-      return [
-        {
-          id: 'sys-bem-vindo',
-          autor: 'ATENDENTE',
-          texto:
-            `${saudacao} Vou te ajudar a registrar sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
-            `É bem rápido: vou fazer ${qtd} ${qtd === 1 ? 'pergunta' : 'perguntas'}, uma de cada vez — ` +
-            `basta responder cada uma aqui no chat. Se errar algo, é só me dizer.\n\n${passos[0].pergunta}`,
-          horario: agora(),
-        },
-      ];
+      return montarBoasVindas();
     }
     return conversaInicial.mensagens;
   });
@@ -157,6 +164,9 @@ export default function ChatCategoria() {
   const [menuAnexo, setMenuAnexo] = useState(false);
   // Modo backend: id do chamado real (null enquanto a triagem não abriu o chamado).
   const [chamadoId, setChamadoId] = useState<string | null>(null);
+  // Status do chamado carregado — quando finalizado (aprovado/recusado), o chat
+  // fica somente-leitura e oferece abrir uma nova solicitação.
+  const [statusChamado, setStatusChamado] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   // Largura da janela: usada para travar o conteúdo na largura visível e evitar
   // que algum overflow horizontal empurre o composer para fora da tela.
@@ -196,6 +206,7 @@ export default function ChatCategoria() {
         const det = await api.detalhe(alvo);
         if (!vivo) return;
         setChamadoId(det.id);
+        setStatusChamado(det.status);
         setTriada(true);
         setMensagens((det.mensagens ?? []).map(mapMensagem));
       } catch {
@@ -238,6 +249,7 @@ export default function ChatCategoria() {
         descricao: r.descricao || undefined,
       });
       setChamadoId(chamado.id);
+      setStatusChamado(chamado.status);
       setTriada(true);
       setMensagens((chamado.mensagens ?? []).map(mapMensagem));
 
@@ -344,6 +356,22 @@ export default function ChatCategoria() {
     else if (apiAtiva) enviarApi('', anexo);
     else addColaborador('', anexo);
   }
+
+  /** Reinicia a tela para abrir um NOVO chamado (após um finalizado). */
+  function novaSolicitacao() {
+    setMenuAnexo(false);
+    setTexto('');
+    setPassoIdx(0);
+    respostasRef.current = {};
+    anexoTriagemRef.current = null;
+    setChamadoId(null);
+    setStatusChamado(null);
+    setTriada(false);
+    setMensagens(montarBoasVindas());
+  }
+
+  // Chamado finalizado (aprovado/recusado): a conversa fica só de leitura.
+  const finalizado = statusChamado === 'APROVADO' || statusChamado === 'RECUSADO';
 
   async function tirarFoto() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -502,7 +530,7 @@ export default function ChatCategoria() {
           />
 
           {/* Menu de anexo */}
-          {menuAnexo && (
+          {menuAnexo && !finalizado && (
             <View style={styles.menuWrap}>
               <GlassSurface style={styles.menuAnexo}>
                 <BotaoAnexo icone="camera-outline" texto="Câmera" onPress={tirarFoto} />
@@ -512,34 +540,53 @@ export default function ChatCategoria() {
             </View>
           )}
 
-          {/* Composer de vidro */}
-          <View style={[styles.composerWrap, { paddingBottom: Spacing.three + insets.bottom }]}>
-            <GlassSurface style={styles.composer}>
-              <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
-                <Ionicons name="add-circle-outline" size={24} color={theme.textSecondary} />
-              </Pressable>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={texto}
-                  onChangeText={setTexto}
-                  placeholder="Mensagem"
-                  placeholderTextColor={theme.textSecondary}
-                  style={[styles.input, { color: theme.text }]}
-                  returnKeyType="send"
-                  onSubmitEditing={enviar}
-                />
+          {/* Composer de vidro — ou aviso de finalizado (somente leitura) */}
+          {finalizado ? (
+            <View style={[styles.composerWrap, { paddingBottom: Spacing.three + insets.bottom }]}>
+              <View style={styles.finalizadoBox}>
+                <Ionicons name="checkmark-done-circle-outline" size={20} color={theme.textSecondary} />
+                <Text style={[styles.finalizadoTxt, { color: theme.textSecondary }]}>
+                  Este atendimento foi finalizado. Para tratar do assunto de novo, abra uma nova solicitação.
+                </Text>
               </View>
               <Pressable
-                onPress={enviar}
-                disabled={!texto.trim() || enviando}
-                style={[
-                  styles.enviar,
-                  { backgroundColor: Brand.primary, opacity: texto.trim() && !enviando ? 1 : 0.45 },
-                ]}>
-                <Ionicons name="send" size={16} color={Brand.onPrimary} />
+                onPress={novaSolicitacao}
+                style={({ pressed }) => [styles.novaBtn, pressed && { opacity: 0.9 }]}>
+                <Ionicons name="add-circle-outline" size={18} color={Brand.onPrimary} />
+                <Text style={styles.novaBtnTxt} numberOfLines={1}>
+                  Nova solicitação de {categoria?.label ?? 'ponto'}
+                </Text>
               </Pressable>
-            </GlassSurface>
-          </View>
+            </View>
+          ) : (
+            <View style={[styles.composerWrap, { paddingBottom: Spacing.three + insets.bottom }]}>
+              <GlassSurface style={styles.composer}>
+                <Pressable onPress={() => setMenuAnexo((v) => !v)} hitSlop={8} style={styles.clip}>
+                  <Ionicons name="add-circle-outline" size={24} color={theme.textSecondary} />
+                </Pressable>
+                <View style={styles.inputWrap}>
+                  <TextInput
+                    value={texto}
+                    onChangeText={setTexto}
+                    placeholder="Mensagem"
+                    placeholderTextColor={theme.textSecondary}
+                    style={[styles.input, { color: theme.text }]}
+                    returnKeyType="send"
+                    onSubmitEditing={enviar}
+                  />
+                </View>
+                <Pressable
+                  onPress={enviar}
+                  disabled={!texto.trim() || enviando}
+                  style={[
+                    styles.enviar,
+                    { backgroundColor: Brand.primary, opacity: texto.trim() && !enviando ? 1 : 0.45 },
+                  ]}>
+                  <Ionicons name="send" size={16} color={Brand.onPrimary} />
+                </Pressable>
+              </GlassSurface>
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Animated.View>
@@ -673,6 +720,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
   },
+  finalizadoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.one,
+    paddingBottom: Spacing.two,
+  },
+  finalizadoTxt: { flex: 1, fontSize: 13, lineHeight: 18 },
+  novaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    backgroundColor: Brand.primary,
+    borderRadius: 22,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+  },
+  novaBtnTxt: { color: Brand.onPrimary, fontWeight: '700', fontSize: 15 },
   composer: {
     flexDirection: 'row',
     alignItems: 'center',
