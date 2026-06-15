@@ -443,14 +443,16 @@ const styles = StyleSheet.create({
     // Remove o anel de foco azul do navegador (web); o realce fica na borda do campo.
     ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
   },
-  // Botao mostrar/ocultar senha: caixa de toque centralizada, encostada na
-  // borda direita do campo (a margem negativa compensa o padding da linha).
+  // Botao mostrar/ocultar senha: quadrado de toque (40x40) centralizado na
+  // vertical e bem DENTRO do campo (sem margem negativa, que jogava o icone
+  // pra cima da borda). O padding da linha (Spacing.three) garante o respiro
+  // a direita; a TextInput (flex:1) encolhe e nunca passa por baixo do icone.
   olho: {
+    width: 40,
     height: 40,
-    width: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: -Spacing.one,
+    borderRadius: 20,
   },
   erro: { color: C.erro, fontSize: 13, fontWeight: '600' },
   botao: {
