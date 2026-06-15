@@ -54,3 +54,21 @@ input:-webkit-autofill:active {
   border-radius: 13px;
   transition: background-color 99999s ease-in-out 0s;
 }
+
+/* Esconde os controles que o navegador injeta DENTRO do campo de senha: o olho
+   de "revelar" do Edge (::-ms-reveal), o X do ::-ms-clear e o botao de
+   credencial/senha-forte do WebKit/Chrome. Eles apareciam duplicados e
+   desalinhados ao lado do nosso proprio botao de mostrar/ocultar senha. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-strong-password-auto-fill-button,
+input::-webkit-caps-lock-indicator {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  margin: 0;
+  width: 0;
+}

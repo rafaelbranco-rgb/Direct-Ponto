@@ -231,7 +231,7 @@ export default function Login() {
                       style={styles.input}
                       onSubmitEditing={fazerLogin}
                     />
-                    <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8}>
+                    <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8} style={styles.olho}>
                       <Ionicons
                         name={verSenha ? 'eye-off-outline' : 'eye-outline'}
                         size={20}
@@ -308,7 +308,7 @@ export default function Login() {
                       secureTextEntry={!verSenha}
                       style={styles.input}
                     />
-                    <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8}>
+                    <Pressable onPress={() => setVerSenha((v) => !v)} hitSlop={8} style={styles.olho}>
                       <Ionicons name={verSenha ? 'eye-off-outline' : 'eye-outline'} size={20} color={C.textDim} />
                     </Pressable>
                   </View>
@@ -435,7 +435,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     minHeight: 52,
   },
-  input: { flex: 1, fontSize: 16, color: C.text, paddingVertical: Spacing.two },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: C.text,
+    paddingVertical: Spacing.two,
+    // Remove o anel de foco azul do navegador (web); o realce fica na borda do campo.
+    ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
+  },
+  // Botao mostrar/ocultar senha: caixa de toque centralizada, encostada na
+  // borda direita do campo (a margem negativa compensa o padding da linha).
+  olho: {
+    height: 40,
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -Spacing.one,
+  },
   erro: { color: C.erro, fontSize: 13, fontWeight: '600' },
   botao: {
     flexDirection: 'row',

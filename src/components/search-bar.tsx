@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Brand } from '@/constants/brand';
@@ -40,5 +40,7 @@ const styles = StyleSheet.create({
     height: 42,
     color: Brand.onPrimary,
     fontSize: 16,
+    // Remove o anel de foco azul do navegador (web), igual aos demais campos.
+    ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }),
   },
 });
