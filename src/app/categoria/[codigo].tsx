@@ -65,23 +65,46 @@ function primeiroNome(nomeCompleto: string) {
   return partes.length <= 2 ? nomeCompleto : `${partes[0]} ${partes[1]}`;
 }
 
-/** Valida respostas da triagem que exigem formato. Devolve a mensagem de erro ou null. */
+/** Até quantos dias para trás uma justificativa pode ser registrada. */
+const LIMITE_DIAS_JUSTIFICATIVA = 60;
+
+/** Valida respostas da triagem que exigem formato/regra. Devolve a mensagem de erro ou null. */
 function validarResposta(chave: string, texto: string): string | null {
   const t = texto.trim();
   if (chave === 'data') {
     const m = t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
-    if (!m) return 'Para continuar, informe a data no formato DD/MM/AAAA (ex.: 08/06/2026).';
+    if (!m) {
+      return 'Não entendi a data. Escreva no formato dia/mês/ano, com barras. Exemplo: 08/06/2026.';
+    }
     const dia = Number(m[1]);
     const mes = Number(m[2]);
-    if (dia < 1 || dia > 31 || mes < 1 || mes > 12) {
-      return 'Essa data não parece válida. Use DD/MM/AAAA (ex.: 08/06/2026).';
+    const hoje = new Date();
+    let ano = m[3] ? Number(m[3]) : hoje.getFullYear();
+    if (ano < 100) ano += 2000;
+    if (mes < 1 || mes > 12 || dia < 1 || dia > 31) {
+      return 'Essa data não existe. Confira o dia e o mês. Exemplo: 08/06/2026.';
+    }
+    const d = new Date(ano, mes - 1, dia);
+    // Confere se a data existe mesmo no calendário (ex.: 31/02 não existe).
+    if (d.getFullYear() !== ano || d.getMonth() !== mes - 1 || d.getDate() !== dia) {
+      return 'Essa data não existe no calendário. Confira o dia e o mês. Exemplo: 08/06/2026.';
+    }
+    const hojeSoData = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    if (d.getTime() > hojeSoData.getTime()) {
+      return 'Essa data ainda não chegou. Só dá para justificar um dia que já passou — confira a data.';
+    }
+    const maisAntiga = hojeSoData.getTime() - LIMITE_DIAS_JUSTIFICATIVA * 86_400_000;
+    if (d.getTime() < maisAntiga) {
+      return `Essa data é muito antiga. Só é possível registrar justificativas dos últimos ${LIMITE_DIAS_JUSTIFICATIVA} dias. Para uma data mais antiga, fale diretamente com o RH.`;
     }
   }
   if (chave === 'horario') {
     const m = t.match(/^(\d{1,2}):(\d{2})$/);
-    if (!m) return 'Informe o horário no formato HH:MM (ex.: 08:00).';
+    if (!m) {
+      return 'Não entendi o horário. Escreva como horas:minutos, com dois pontos. Exemplo: 08:00.';
+    }
     if (Number(m[1]) > 23 || Number(m[2]) > 59) {
-      return 'Esse horário não é válido. Use HH:MM (ex.: 08:00).';
+      return 'Esse horário não existe. As horas vão de 00 a 23 e os minutos de 00 a 59. Exemplo: 08:00.';
     }
   }
   return null;
@@ -110,11 +133,18 @@ export default function ChatCategoria() {
   // dentro de efeito — exigência do React Compiler).
   const [mensagens, setMensagens] = useState<Mensagem[]>(() => {
     if (!conversaInicial.triada && conversaInicial.mensagens.length === 0 && passos.length > 0) {
+      const nm = (usuario?.nome ?? '').trim().split(/\s+/)[0];
+      const primeiro = nm ? nm.charAt(0).toUpperCase() + nm.slice(1).toLowerCase() : '';
+      const saudacao = primeiro ? `Olá, ${primeiro}! 👋` : 'Olá! 👋';
+      const qtd = passos.length;
       return [
         {
           id: 'sys-bem-vindo',
           autor: 'ATENDENTE',
-          texto: `Olá! Vou abrir seu atendimento de ${categoria?.label ?? 'ponto'}. ${passos[0].pergunta}`,
+          texto:
+            `${saudacao} Vou te ajudar a registrar sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
+            `É bem rápido: vou fazer ${qtd} ${qtd === 1 ? 'pergunta' : 'perguntas'}, uma de cada vez — ` +
+            `basta responder cada uma aqui no chat. Se errar algo, é só me dizer.\n\n${passos[0].pergunta}`,
           horario: agora(),
         },
       ];
@@ -245,7 +275,7 @@ export default function ChatCategoria() {
     addColaborador(textoResp ?? '', anexo);
 
     if (passo.tipo === 'anexo' && !anexo) {
-      addAtendente('Para esta etapa, use o botão de anexar (clipe) abaixo.');
+      addAtendente('Para esta etapa preciso de um arquivo. Toque no ícone de "+" aqui embaixo e escolha Câmera, Galeria ou Documento.');
       return;
     }
     if (passo.tipo === 'texto' && !textoResp) return;

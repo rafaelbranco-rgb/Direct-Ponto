@@ -140,22 +140,26 @@ const SEM_HORARIO: CategoriaCodigo[] = ['FALTA', 'ATESTADO', 'BANCO_HORAS'];
 export function passosTriagem(codigo: CategoriaCodigo): PassoTriagem[] {
   const data: PassoTriagem = {
     chave: 'data',
-    pergunta: 'Qual foi a data da ocorrência? (ex.: 08/06/2026)',
+    pergunta:
+      'Vamos começar pela data. Em que dia isso aconteceu? Escreva no formato dia/mês/ano, com barras — por exemplo: 08/06/2026.',
     tipo: 'texto',
   };
   const horario: PassoTriagem = {
     chave: 'horario',
-    pergunta: 'Qual o horário correto que deveria constar? (ex.: 08:00)',
+    pergunta:
+      'Agora o horário. Que horas deveriam ter sido registradas no seu ponto? Escreva como horas:minutos, com dois pontos — por exemplo: 08:00 (oito da manhã) ou 17:30.',
     tipo: 'texto',
   };
   const descricao: PassoTriagem = {
     chave: 'descricao',
-    pergunta: 'Descreva brevemente o motivo.',
+    pergunta:
+      'Por último, conte com suas próprias palavras o que aconteceu. Pode escrever à vontade — quanto mais detalhe, mais fácil para o RH entender e aprovar. Por exemplo: "Fiquei preso no trânsito por causa de um acidente na avenida."',
     tipo: 'texto',
   };
   const anexo: PassoTriagem = {
     chave: 'anexo',
-    pergunta: 'Por favor, anexe o atestado/comprovante tocando no ícone de clipe (anexar) abaixo.',
+    pergunta:
+      'Para finalizar, preciso do atestado ou comprovante. Toque no ícone de "+" aqui embaixo e escolha "Câmera" para tirar uma foto do documento, ou "Galeria"/"Documento" para enviar um arquivo que você já tenha no celular.',
     tipo: 'anexo',
   };
 
