@@ -437,6 +437,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    // minWidth:0 deixa o campo ENCOLHER no flexbox (no web o padrão é min-width:auto,
+    // que impede o encolhimento e empurra o olho para fora da borda em alguns
+    // aparelhos/fontes). Esta é a chave da responsividade do campo de senha.
+    minWidth: 0,
     fontSize: 16,
     color: C.text,
     paddingVertical: Spacing.two,
@@ -450,6 +454,7 @@ const styles = StyleSheet.create({
   olho: {
     width: 40,
     height: 40,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
