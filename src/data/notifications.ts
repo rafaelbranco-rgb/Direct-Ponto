@@ -79,7 +79,6 @@ export function adicionarNotificacao(categoria: CategoriaCodigo, titulo: string,
     lida: false,
   };
   lista = [n, ...lista];
-  dispararNativa(titulo, corpo);
 
   toastAtivo = n;
   if (toastTimer) clearTimeout(toastTimer);
@@ -116,26 +115,24 @@ export function marcarTodasLidas() {
   }
 }
 
-/* ───────── notificação nativa do navegador (web/PWA) ───────── */
-export function pedirPermissaoNotificacao() {
+/* ───────── notificação do sistema (Web Push / PWA) ─────────
+ * A notificação nativa em celular (iOS/Android) NÃO funciona com o construtor
+ * `new Notification()` — o iOS nem suporta e o Android Chrome o proíbe. Quem
+ * mostra a notificação (com som) é o SERVICE WORKER, via Web Push enviado pelo
+ * backend (ver `push.ts` + `/sw.js`). Aqui só pedimos a permissão e, uma vez
+ * concedida, registramos a inscrição de push. O toast in-app continua valendo
+ * quando o app está aberto. */
+export async function pedirPermissaoNotificacao() {
   if (Platform.OS !== 'web') return;
   try {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      void Notification.requestPermission();
+    if (typeof Notification === 'undefined') return;
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      const { registrarPush } = await import('./push');
+      await registrarPush();
     }
   } catch {
     /* navegador sem suporte — segue só com toast/badge */
-  }
-}
-
-function dispararNativa(titulo: string, corpo: string) {
-  if (Platform.OS !== 'web') return;
-  try {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      const n = new Notification(titulo, { body: corpo, icon: '/favicon.png' });
-      void n;
-    }
-  } catch {
-    /* ignora se o navegador bloquear */
   }
 }
