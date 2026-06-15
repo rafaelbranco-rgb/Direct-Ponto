@@ -51,8 +51,9 @@ export default function Login() {
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
 
-  // 1º acesso (cadastro de senha por CPF, validado no RM)
+  // 1º acesso / redefinição (cadastro de senha por CPF, validado no RM)
   const [etapa, setEtapa] = useState<'cpf' | 'senha'>('cpf');
+  const [intencaoCpf, setIntencaoCpf] = useState<'primeiro' | 'esqueci'>('primeiro');
   const [nomeRm, setNomeRm] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [confirma, setConfirma] = useState('');
@@ -96,7 +97,11 @@ export default function Login() {
       setNomeRm(r.nome);
       if (r.precisaDefinirSenha) setEtapa('senha');
       else {
-        setErro('Você já tem senha cadastrada. Faça login.');
+        setErro(
+          intencaoCpf === 'esqueci'
+            ? 'Você já tem uma senha cadastrada. Para redefinir, peça ao seu gestor ou ao RH para liberar a redefinição no painel — depois volte aqui e crie a nova senha.'
+            : 'Você já tem senha cadastrada. É só entrar com seu CPF e sua senha.',
+        );
         setModo('login');
       }
     } catch (e) {
@@ -129,7 +134,8 @@ export default function Login() {
     }
   }
 
-  function irParaPrimeiroAcesso() {
+  function irParaCpf(intencao: 'primeiro' | 'esqueci') {
+    setIntencaoCpf(intencao);
     setModo('primeiro');
     setEtapa('cpf');
     setErro('');
@@ -250,14 +256,32 @@ export default function Login() {
                     <Ionicons name="arrow-forward" size={18} color={Brand.onPrimary} />
                   </Pressable>
 
-                  <Pressable hitSlop={8} style={styles.linkWrap} onPress={apiAtiva ? irParaPrimeiroAcesso : undefined}>
-                    <Text style={styles.link}>{apiAtiva ? 'Primeiro acesso? Cadastrar senha' : 'Esqueci minha senha'}</Text>
-                  </Pressable>
+                  {apiAtiva ? (
+                    <View style={styles.linksRow}>
+                      <Pressable hitSlop={8} style={styles.linkWrap} onPress={() => irParaCpf('primeiro')}>
+                        <Text style={styles.link}>Primeiro acesso</Text>
+                      </Pressable>
+                      <Text style={styles.linkSep}>•</Text>
+                      <Pressable hitSlop={8} style={styles.linkWrap} onPress={() => irParaCpf('esqueci')}>
+                        <Text style={styles.link}>Esqueci minha senha</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable hitSlop={8} style={styles.linkWrap}>
+                      <Text style={styles.link}>Esqueci minha senha</Text>
+                    </Pressable>
+                  )}
                 </>
               ) : etapa === 'cpf' ? (
                 <>
-                  <Text style={styles.cardTitle}>Primeiro acesso</Text>
-                  <Text style={styles.cardSub}>Confirme seu CPF para cadastrar sua senha.</Text>
+                  <Text style={styles.cardTitle}>
+                    {intencaoCpf === 'esqueci' ? 'Redefinir minha senha' : 'Primeiro acesso'}
+                  </Text>
+                  <Text style={styles.cardSub}>
+                    {intencaoCpf === 'esqueci'
+                      ? 'Informe seu CPF para criar uma nova senha. Se o RH/gestor já liberou a redefinição, você consegue trocar agora mesmo.'
+                      : 'Confirme seu CPF para cadastrar sua senha.'}
+                  </Text>
 
                   <View style={styles.inputRow}>
                     <Ionicons name="card-outline" size={20} color={C.textDim} />
@@ -483,6 +507,14 @@ const styles = StyleSheet.create({
   botaoPress: { opacity: 0.9 },
   botaoText: { color: Brand.onPrimary, fontWeight: '700', fontSize: 16 },
   linkWrap: { alignSelf: 'center' },
+  linksRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  linkSep: { color: C.textDim, fontSize: 13 },
   link: { color: '#9DBBF0', fontSize: 14, fontWeight: '600' },
   footer: { color: C.textDim, textAlign: 'center', fontSize: 12 },
 });
