@@ -29,7 +29,17 @@ let socket: Socket | null = null;
 /** Conecta o socket de notificações (idempotente). Chamar após o login. */
 export function conectarNotificacoes() {
   if (!BASE || socket) return;
-  socket = io(`${BASE}/chat`, { transports: ['websocket'], auth: { token: getToken() } });
+  socket = io(`${BASE}/chat`, {
+    // Tenta WebSocket (rápido) e cai para long-polling quando o Wi-Fi está fraco
+    // (ex.: andares longe do roteador) em vez de simplesmente não conectar.
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
+    auth: { token: getToken() },
+  });
 
   socket.on('notificacao', (n: NotifPayload) => {
     const cat = (n.categoria ?? 'ATRASO') as CategoriaCodigo;

@@ -103,9 +103,16 @@ export function resumoTriagem(respostas: Record<string, string>): string {
  */
 export function conectarChat(chamadoId: string, onMensagem: (m: MensagemApi) => void): () => void {
   const socket: Socket = io(`${BASE}/chat`, {
-    transports: ['websocket'],
+    // WebSocket primeiro; cai para long-polling em rede fraca (Wi-Fi distante).
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
     auth: { token: getToken() },
   });
+  // 'connect' dispara a cada (re)conexão → reentra na sala do chamado sozinho.
   socket.on('connect', () => socket.emit('entrar', chamadoId));
   socket.on('mensagem:nova', (m: MensagemApi) => {
     if (m?.chamadoId === chamadoId) onMensagem(m);

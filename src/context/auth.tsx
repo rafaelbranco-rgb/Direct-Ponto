@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Platform } from 'react-native';
 
-import { api, apiAtiva, setToken, type UsuarioApi } from '@/data/api';
+import { api, apiAtiva, ApiError, getToken, setToken, type UsuarioApi } from '@/data/api';
 import { conectarNotificacoes, desconectarNotificacoes } from '@/data/socket-global';
 import { pedirPermissaoNotificacao } from '@/data/notifications';
 
@@ -30,24 +31,66 @@ function mapear(u: UsuarioApi): Usuario {
   return { id: u.id, nome: u.nome, identificador: u.cpf ?? u.matricula ?? u.email ?? '', tipo: u.tipo };
 }
 
+// Cache do usuário logado (só no web/PWA, onde há localStorage). Permite manter
+// a sessão na tela mesmo quando o /auth/me falha por rede ruim (3º andar, troca
+// de Wi-Fi). No nativo o token já é só em memória, então não há o que cachear.
+const CHAVE_USER = 'contato:usuario';
+function carregarCache(): Usuario | null {
+  if (Platform.OS !== 'web') return null;
+  try {
+    const v = localStorage.getItem(CHAVE_USER);
+    return v ? (JSON.parse(v) as Usuario) : null;
+  } catch {
+    return null;
+  }
+}
+function salvarCache(u: Usuario | null) {
+  if (Platform.OS !== 'web') return;
+  try {
+    if (u) localStorage.setItem(CHAVE_USER, JSON.stringify(u));
+    else localStorage.removeItem(CHAVE_USER);
+  } catch {
+    /* ignora */
+  }
+}
+
 /**
  * Autenticação do colaborador. Com EXPO_PUBLIC_API_URL definido, fala com o
  * backend (login por CPF + 1º acesso). Sem a URL, mantém o modo demonstração.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(apiAtiva);
+  // Começa do usuário em cache (se houver) para NÃO mostrar login enquanto valida.
+  const [usuario, setUsuario] = useState<Usuario | null>(carregarCache);
+  // Só "carrega" (tela cheia) quando não há sessão em cache para mostrar.
+  const [carregando, setCarregando] = useState<boolean>(apiAtiva && !carregarCache());
 
   useEffect(() => {
     if (!apiAtiva) return;
+    // Sem token salvo não adianta validar — vai direto para o login.
+    if (!getToken()) {
+      setUsuario(null);
+      salvarCache(null);
+      setCarregando(false);
+      return;
+    }
     let vivo = true;
     api
       .me()
-      .then((u) => vivo && setUsuario(mapear(u)))
-      .catch(() => {
+      .then((u) => {
         if (!vivo) return;
-        setToken(null);
-        setUsuario(null);
+        const mapped = mapear(u);
+        setUsuario(mapped);
+        salvarCache(mapped);
+      })
+      .catch((e) => {
+        if (!vivo) return;
+        // Só desloga se o backend REJEITOU o token (sessão inválida/expirada).
+        // Erro de rede (offline, Wi-Fi fraco, reconexão) mantém a sessão local.
+        if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+          setToken(null);
+          setUsuario(null);
+          salvarCache(null);
+        }
       })
       .finally(() => vivo && setCarregando(false));
     return () => {
@@ -69,19 +112,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function entrar(u: Usuario) {
     setUsuario(u);
+    salvarCache(u);
   }
   async function entrarApi(identificador: string, senha: string) {
     const r = await api.login(identificador, senha);
     setToken(r.token);
-    setUsuario(mapear(r.usuario));
+    const u = mapear(r.usuario);
+    setUsuario(u);
+    salvarCache(u);
   }
   function aplicarSessao(token: string, u: UsuarioApi) {
     setToken(token);
-    setUsuario(mapear(u));
+    const mapped = mapear(u);
+    setUsuario(mapped);
+    salvarCache(mapped);
   }
   function sair() {
     setToken(null);
     setUsuario(null);
+    salvarCache(null);
   }
 
   return (

@@ -31,7 +31,6 @@ import {
   agendarRespostaAtendente,
   getConversa,
   novoProtocolo,
-  passosTriagem,
   salvarConversa,
   type AnexoMsg,
   type Mensagem,
@@ -43,7 +42,6 @@ import {
   mapMensagem,
   mesclarMensagens,
   parseDataOcorrencia,
-  resumoTriagem,
 } from '@/data/chat-live';
 import { marcarCategoriaLida, pedirPermissaoNotificacao } from '@/data/notifications';
 import type { CategoriaCodigo } from '@/data/types';
@@ -65,51 +63,6 @@ function primeiroNome(nomeCompleto: string) {
   return partes.length <= 2 ? nomeCompleto : `${partes[0]} ${partes[1]}`;
 }
 
-/** Até quantos dias para trás uma justificativa pode ser registrada. */
-const LIMITE_DIAS_JUSTIFICATIVA = 60;
-
-/** Valida respostas da triagem que exigem formato/regra. Devolve a mensagem de erro ou null. */
-function validarResposta(chave: string, texto: string): string | null {
-  const t = texto.trim();
-  if (chave === 'data') {
-    const m = t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
-    if (!m) {
-      return 'Não entendi a data. Escreva no formato dia/mês/ano, com barras. Exemplo: 08/06/2026.';
-    }
-    const dia = Number(m[1]);
-    const mes = Number(m[2]);
-    const hoje = new Date();
-    let ano = m[3] ? Number(m[3]) : hoje.getFullYear();
-    if (ano < 100) ano += 2000;
-    if (mes < 1 || mes > 12 || dia < 1 || dia > 31) {
-      return 'Essa data não existe. Confira o dia e o mês. Exemplo: 08/06/2026.';
-    }
-    const d = new Date(ano, mes - 1, dia);
-    // Confere se a data existe mesmo no calendário (ex.: 31/02 não existe).
-    if (d.getFullYear() !== ano || d.getMonth() !== mes - 1 || d.getDate() !== dia) {
-      return 'Essa data não existe no calendário. Confira o dia e o mês. Exemplo: 08/06/2026.';
-    }
-    const hojeSoData = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-    if (d.getTime() > hojeSoData.getTime()) {
-      return 'Essa data ainda não chegou. Só dá para justificar um dia que já passou — confira a data.';
-    }
-    const maisAntiga = hojeSoData.getTime() - LIMITE_DIAS_JUSTIFICATIVA * 86_400_000;
-    if (d.getTime() < maisAntiga) {
-      return `Essa data é muito antiga. Só é possível registrar justificativas dos últimos ${LIMITE_DIAS_JUSTIFICATIVA} dias. Para uma data mais antiga, fale diretamente com o RH.`;
-    }
-  }
-  if (chave === 'horario') {
-    const m = t.match(/^(\d{1,2}):(\d{2})$/);
-    if (!m) {
-      return 'Não entendi o horário. Escreva como horas:minutos, com dois pontos. Exemplo: 08:00.';
-    }
-    if (Number(m[1]) > 23 || Number(m[2]) > 59) {
-      return 'Esse horário não existe. As horas vão de 00 a 23 e os minutos de 00 a 59. Exemplo: 08:00.';
-    }
-  }
-  return null;
-}
-
 export default function ChatCategoria() {
   const router = useRouter();
   const theme = useTheme();
@@ -123,43 +76,42 @@ export default function ChatCategoria() {
 
   // No modo backend a conversa vem do servidor (carregada no efeito abaixo); o
   // mock só vale na demonstração. Sem isso, categorias com conversa fixa (ex.:
-  // ATRASO) abririam "triadas" sem chamado real e o envio não iria ao backend.
+  // ATRASO) abririam "abertas" sem chamado real e o envio não iria ao backend.
   const conversaInicial = apiAtiva
     ? { categoria: cod, remetente: nomeColaborador, triada: false, mensagens: [] as Mensagem[] }
     : getConversa(cod, nomeColaborador);
-  const passos = passosTriagem(cod);
 
-  // Monta a mensagem de boas-vindas + 1ª pergunta da triagem (reusada também ao
-  // tocar em "Nova solicitação" depois de um chamado finalizado).
+  // Mensagem de boas-vindas (sem triagem): o colaborador apenas escreve a
+  // justificativa no chat e, ao enviar, o chamado é aberto. Reusada também ao
+  // tocar em "Nova solicitação" depois de um chamado finalizado.
   function montarBoasVindas(): Mensagem[] {
-    if (passos.length === 0) return [];
     const nm = (usuario?.nome ?? '').trim().split(/\s+/)[0];
     const primeiro = nm ? nm.charAt(0).toUpperCase() + nm.slice(1).toLowerCase() : '';
     const saudacao = primeiro ? `Olá, ${primeiro}! 👋` : 'Olá! 👋';
-    const qtd = passos.length;
     return [
       {
         id: 'sys-bem-vindo',
         autor: 'ATENDENTE',
         texto:
-          `${saudacao} Vou te ajudar a registrar sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
-          `É bem rápido: vou fazer ${qtd} ${qtd === 1 ? 'pergunta' : 'perguntas'}, uma de cada vez — ` +
-          `basta responder cada uma aqui no chat. Se errar algo, é só me dizer.\n\n${passos[0].pergunta}`,
+          `${saudacao} Aqui você registra sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
+          `Conte com suas palavras o que aconteceu — pode incluir a data e o horário, e anexar um atestado ` +
+          `ou documento no botão "+" se precisar. Assim que você enviar, abrimos seu atendimento e um ` +
+          `responsável dá retorno por aqui.`,
         horario: agora(),
       },
     ];
   }
 
-  // Mensagem inicial da triagem é calculada já no estado inicial (sem setState
+  // A mensagem de boas-vindas é calculada já no estado inicial (sem setState
   // dentro de efeito — exigência do React Compiler).
   const [mensagens, setMensagens] = useState<Mensagem[]>(() => {
-    if (!conversaInicial.triada && conversaInicial.mensagens.length === 0 && passos.length > 0) {
+    if (!conversaInicial.triada && conversaInicial.mensagens.length === 0) {
       return montarBoasVindas();
     }
     return conversaInicial.mensagens;
   });
+  // `triada` agora significa "chamado já aberto" (a 1ª mensagem do colaborador abre).
   const [triada, setTriada] = useState(conversaInicial.triada);
-  const [passoIdx, setPassoIdx] = useState(0);
   const [texto, setTexto] = useState('');
   const [menuAnexo, setMenuAnexo] = useState(false);
   // Modo backend: id do chamado real (null enquanto a triagem não abriu o chamado).
@@ -174,9 +126,6 @@ export default function ChatCategoria() {
 
   const seq = useRef(1000);
   const listaRef = useRef<FlatList<Mensagem>>(null);
-  // Respostas estruturadas da triagem (viram os campos do chamado).
-  const respostasRef = useRef<Record<string, string>>({});
-  const anexoTriagemRef = useRef<AnexoMsg | null>(null);
 
   function nid() {
     seq.current += 1;
@@ -237,29 +186,31 @@ export default function ChatCategoria() {
   const addAtendente = (texto: string) => add({ autor: 'ATENDENTE', texto, horario: agora() });
   const addSistema = (texto: string, data: string) => add({ autor: 'SISTEMA', texto, data });
 
-  /** No backend: abre o chamado de verdade e envia o resumo da triagem + anexo. */
-  async function abrirChamadoBackend() {
-    const r = respostasRef.current;
+  /**
+   * No backend: abre o chamado de verdade já enviando a 1ª mensagem do
+   * colaborador (texto e/ou anexo). Sem triagem — a justificativa é o que a
+   * pessoa escreveu. A data da ocorrência fica como hoje (o conteúdo vai no texto).
+   */
+  async function abrirChamadoBackend(primeiroTexto: string, anexo?: AnexoMsg) {
     try {
       setEnviando(true);
       const chamado = await api.abrirChamado({
         categoria: cod,
-        dataOcorrencia: parseDataOcorrencia(r.data),
-        horarioProposto: r.horario || undefined,
-        descricao: r.descricao || undefined,
+        dataOcorrencia: parseDataOcorrencia(undefined),
       });
       setChamadoId(chamado.id);
       setStatusChamado(chamado.status);
       setTriada(true);
       setMensagens((chamado.mensagens ?? []).map(mapMensagem));
 
-      const resumo = resumoTriagem(r);
-      if (resumo) receber(await api.enviarMensagem(chamado.id, resumo));
-      const anexo = anexoTriagemRef.current;
+      const t = primeiroTexto.trim();
+      if (t) receber(await api.enviarMensagem(chamado.id, t));
       if (anexo) {
         receber(await api.enviarMensagem(chamado.id, '', { nome: anexo.nome, ehImagem: anexo.ehImagem }));
       }
     } catch (e) {
+      // Falhou ao abrir: devolve o texto ao composer para a pessoa tentar de novo.
+      if (primeiroTexto.trim()) setTexto(primeiroTexto);
       addAtendente(
         e instanceof ApiError
           ? `Não consegui abrir o atendimento: ${e.message}`
@@ -270,48 +221,19 @@ export default function ChatCategoria() {
     }
   }
 
-  function finalizarTriagem() {
+  /** Primeira mensagem da conversa: abre o chamado e já envia o que foi escrito. */
+  function primeiraMensagem(textoMsg: string, anexo?: AnexoMsg) {
     if (apiAtiva) {
-      abrirChamadoBackend();
+      abrirChamadoBackend(textoMsg, anexo);
       return;
     }
+    // Modo demonstração (sem backend): simula a abertura e a resposta do atendente.
+    if (textoMsg.trim()) addColaborador(textoMsg.trim());
+    else if (anexo) addColaborador('', anexo);
     addSistema(`Protocolo ${novoProtocolo()} — Atendimento solicitado`, dataHoraAgora());
     addAtendente('Recebemos sua solicitação. Em breve um responsável dará retorno por aqui.');
     setTriada(true);
-    // Simula o atendimento respondendo em seguida → gera notificação.
     agendarRespostaAtendente(cod, categoria?.label ?? 'Ponto');
-  }
-
-  function responderTriagem(textoResp?: string, anexo?: AnexoMsg) {
-    const passo = passos[passoIdx];
-    addColaborador(textoResp ?? '', anexo);
-
-    if (passo.tipo === 'anexo' && !anexo) {
-      addAtendente('Para esta etapa preciso de um arquivo. Toque no ícone de "+" aqui embaixo e escolha Câmera, Galeria ou Documento.');
-      return;
-    }
-    if (passo.tipo === 'texto' && !textoResp) return;
-
-    // Valida data/horário: se vier errado, pede de novo (não avança).
-    if (passo.tipo === 'texto') {
-      const erro = validarResposta(passo.chave, textoResp ?? '');
-      if (erro) {
-        addAtendente(erro);
-        return;
-      }
-    }
-
-    // Guarda a resposta para virar campo do chamado / resumo no backend.
-    if (passo.tipo === 'anexo' && anexo) anexoTriagemRef.current = anexo;
-    else respostasRef.current[passo.chave] = (textoResp ?? '').trim();
-
-    const prox = passoIdx + 1;
-    if (prox < passos.length) {
-      setPassoIdx(prox);
-      addAtendente(passos[prox].pergunta);
-    } else {
-      finalizarTriagem();
-    }
   }
 
   /** Envia uma mensagem ao backend e exibe o retorno (o socket também ecoa). */
@@ -341,7 +263,7 @@ export default function ChatCategoria() {
     setTexto('');
     setMenuAnexo(false);
     if (!triada) {
-      responderTriagem(t);
+      primeiraMensagem(t);
     } else if (apiAtiva) {
       enviarApi(t);
     } else {
@@ -352,7 +274,7 @@ export default function ChatCategoria() {
 
   function aoAnexar(anexo: AnexoMsg) {
     setMenuAnexo(false);
-    if (!triada) responderTriagem(undefined, anexo);
+    if (!triada) primeiraMensagem('', anexo);
     else if (apiAtiva) enviarApi('', anexo);
     else addColaborador('', anexo);
   }
@@ -361,9 +283,6 @@ export default function ChatCategoria() {
   function novaSolicitacao() {
     setMenuAnexo(false);
     setTexto('');
-    setPassoIdx(0);
-    respostasRef.current = {};
-    anexoTriagemRef.current = null;
     setChamadoId(null);
     setStatusChamado(null);
     setTriada(false);

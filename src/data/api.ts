@@ -44,16 +44,30 @@ export class ApiError extends Error {
   }
 }
 
+/** Tempo máximo de espera por resposta antes de abortar (rede fraca não trava a tela). */
+const TIMEOUT_MS = 15000;
+
 async function req<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${BASE}/api${caminho}`, {
-    method: metodo,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: corpo === undefined ? undefined : JSON.stringify(corpo),
-  });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/api${caminho}`, {
+      method: metodo,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: corpo === undefined ? undefined : JSON.stringify(corpo),
+      signal: ctrl.signal,
+    });
+  } catch {
+    // Falha de rede ou timeout: status 0 (não é 401/403 → não desloga a sessão).
+    throw new ApiError(0, 'Sem conexão com o servidor. Verifique a internet e tente de novo.');
+  } finally {
+    clearTimeout(timer);
+  }
   if (res.status === 204) return undefined as T;
   const dados = await res.json().catch(() => ({}));
   if (!res.ok) {

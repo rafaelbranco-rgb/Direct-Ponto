@@ -51,7 +51,7 @@ export async function registrarPush(): Promise<void> {
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: base64ParaUint8(chave),
+        applicationServerKey: base64ParaUint8(chave) as BufferSource,
       });
     }
 
