@@ -13,7 +13,12 @@ export type AutorMensagem = 'COLABORADOR' | 'ATENDENTE' | 'SISTEMA';
 export interface AnexoMsg {
   nome: string;
   ehImagem: boolean;
+  /** Caminho local do arquivo escolhido (antes de subir). */
   uri?: string;
+  /** MIME do arquivo escolhido (para o upload). */
+  mime?: string;
+  /** URL no servidor (com token) para exibir/baixar depois de enviado. */
+  url?: string;
 }
 
 export interface Mensagem {

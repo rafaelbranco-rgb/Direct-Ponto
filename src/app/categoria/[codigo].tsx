@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -205,8 +206,10 @@ export default function ChatCategoria() {
 
       const t = primeiroTexto.trim();
       if (t) receber(await api.enviarMensagem(chamado.id, t));
-      if (anexo) {
-        receber(await api.enviarMensagem(chamado.id, '', { nome: anexo.nome, ehImagem: anexo.ehImagem }));
+      if (anexo?.uri) {
+        receber(
+          await api.enviarAnexoArquivo(chamado.id, { uri: anexo.uri, nome: anexo.nome, mime: anexo.mime }),
+        );
       }
     } catch (e) {
       // Falhou ao abrir: devolve o texto ao composer para a pessoa tentar de novo.
@@ -236,17 +239,18 @@ export default function ChatCategoria() {
     agendarRespostaAtendente(cod, categoria?.label ?? 'Ponto');
   }
 
-  /** Envia uma mensagem ao backend e exibe o retorno (o socket também ecoa). */
+  /** Envia uma mensagem (texto OU anexo) ao backend e exibe o retorno. */
   async function enviarApi(t: string, anexo?: AnexoMsg) {
     if (!chamadoId) return;
     try {
       setEnviando(true);
-      const m = await api.enviarMensagem(
-        chamadoId,
-        t,
-        anexo ? { nome: anexo.nome, ehImagem: anexo.ehImagem } : undefined,
-      );
-      receber(m);
+      if (anexo?.uri) {
+        receber(
+          await api.enviarAnexoArquivo(chamadoId, { uri: anexo.uri, nome: anexo.nome, mime: anexo.mime }),
+        );
+      } else if (t) {
+        receber(await api.enviarMensagem(chamadoId, t));
+      }
     } catch (e) {
       addAtendente(
         e instanceof ApiError ? `Não consegui enviar: ${e.message}` : 'Falha ao enviar a mensagem.',
@@ -298,14 +302,14 @@ export default function ChatCategoria() {
     const res = await ImagePicker.launchCameraAsync({ quality: 0.6 });
     if (!res.canceled) {
       const a = res.assets[0];
-      aoAnexar({ nome: a.fileName ?? 'foto.jpg', ehImagem: true, uri: a.uri });
+      aoAnexar({ nome: a.fileName ?? 'foto.jpg', ehImagem: true, uri: a.uri, mime: a.mimeType ?? 'image/jpeg' });
     }
   }
   async function escolherGaleria() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
     if (!res.canceled) {
       const a = res.assets[0];
-      aoAnexar({ nome: a.fileName ?? 'imagem.jpg', ehImagem: true, uri: a.uri });
+      aoAnexar({ nome: a.fileName ?? 'imagem.jpg', ehImagem: true, uri: a.uri, mime: a.mimeType ?? 'image/jpeg' });
     }
   }
   async function anexarDocumento() {
@@ -325,7 +329,8 @@ export default function ChatCategoria() {
     if (!res.canceled) {
       const a = res.assets[0];
       const ehImagem = (a.mimeType ?? '').startsWith('image/');
-      aoAnexar({ nome: a.name, ehImagem, uri: ehImagem ? a.uri : undefined });
+      // uri SEMPRE (precisamos dela para subir o arquivo, imagem ou documento).
+      aoAnexar({ nome: a.name, ehImagem, uri: a.uri, mime: a.mimeType ?? undefined });
     }
   }
 
@@ -365,10 +370,21 @@ export default function ChatCategoria() {
                 },
           ]}>
           {item.anexo &&
-            (item.anexo.ehImagem && item.anexo.uri ? (
-              <Image source={{ uri: item.anexo.uri }} style={styles.anexoImg} contentFit="cover" />
+            (item.anexo.ehImagem && (item.anexo.uri || item.anexo.url) ? (
+              <Pressable
+                onPress={() => item.anexo?.url && Linking.openURL(item.anexo.url)}
+                disabled={!item.anexo.url}>
+                <Image
+                  source={{ uri: item.anexo.uri ?? item.anexo.url }}
+                  style={styles.anexoImg}
+                  contentFit="cover"
+                />
+              </Pressable>
             ) : (
-              <View style={styles.anexoArq}>
+              <Pressable
+                style={styles.anexoArq}
+                onPress={() => item.anexo?.url && Linking.openURL(item.anexo.url)}
+                disabled={!item.anexo.url}>
                 <Ionicons
                   name="document-outline"
                   size={18}
@@ -378,7 +394,7 @@ export default function ChatCategoria() {
                   style={[styles.anexoArqTxt, { color: ehColaborador ? Brand.onPrimary : theme.text }]}>
                   {item.anexo.nome}
                 </Text>
-              </View>
+              </Pressable>
             ))}
           {!!item.texto && (
             <Text style={[styles.balaoTexto, { color: ehColaborador ? Brand.onPrimary : theme.text }]}>

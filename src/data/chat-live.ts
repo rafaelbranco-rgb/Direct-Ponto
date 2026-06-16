@@ -33,6 +33,12 @@ export function formatDataSistema(iso: string): string {
   )}:${doisDigitos(d.getMinutes())}h`;
 }
 
+/** URL (com token na query) para exibir/baixar um anexo de mensagem. */
+function urlAnexo(mensagemId: string): string {
+  const t = getToken();
+  return `${BASE}/api/anexos/${mensagemId}${t ? `?token=${encodeURIComponent(t)}` : ''}`;
+}
+
 /** Converte uma mensagem do backend para o formato exibido na tela. */
 export function mapMensagem(m: MensagemApi): Mensagem {
   return {
@@ -41,7 +47,13 @@ export function mapMensagem(m: MensagemApi): Mensagem {
     texto: m.texto ?? '',
     horario: m.autor === 'SISTEMA' ? undefined : (m.horario ?? ''),
     data: m.autor === 'SISTEMA' ? formatDataSistema(m.criadoEm) : undefined,
-    anexo: m.anexoNome ? { nome: m.anexoNome, ehImagem: !!m.anexoEhImagem } : undefined,
+    anexo: m.anexoNome
+      ? {
+          nome: m.anexoNome,
+          ehImagem: !!m.anexoEhImagem,
+          url: m.anexoArquivo ? urlAnexo(m.id) : undefined,
+        }
+      : undefined,
     lida: m.autor === 'COLABORADOR' ? true : undefined,
   };
 }

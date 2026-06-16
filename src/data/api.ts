@@ -95,6 +95,8 @@ export interface MensagemApi {
   horario: string | null;
   anexoNome: string | null;
   anexoEhImagem: boolean | null;
+  anexoMime?: string | null;
+  anexoArquivo?: string | null;
   criadoEm: string;
 }
 export interface ChamadoApi {
@@ -147,6 +149,37 @@ export const api = {
       anexoNome: anexo?.nome,
       anexoEhImagem: anexo?.ehImagem,
     }),
+  /** Sobe um arquivo (foto/documento) como mensagem. Multipart — não usa req(). */
+  enviarAnexoArquivo: async (
+    id: string,
+    arquivo: { uri: string; nome: string; mime?: string },
+  ): Promise<MensagemApi> => {
+    const form = new FormData();
+    if (Platform.OS === 'web') {
+      const r = await fetch(arquivo.uri);
+      const blob = await r.blob();
+      form.append('arquivo', blob, arquivo.nome);
+    } else {
+      // No React Native, FormData aceita { uri, name, type }.
+      form.append('arquivo', {
+        uri: arquivo.uri,
+        name: arquivo.nome,
+        type: arquivo.mime ?? 'application/octet-stream',
+      } as unknown as Blob);
+    }
+    const token = getToken();
+    const res = await fetch(`${BASE}/api/chamados/${id}/anexos`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    const dados = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = Array.isArray(dados?.message) ? dados.message.join(', ') : (dados?.message ?? `Erro ${res.status}`);
+      throw new ApiError(res.status, msg);
+    }
+    return dados as MensagemApi;
+  },
 
   trocarMinhaSenha: (senhaAtual: string | undefined, novaSenha: string) =>
     req<{ ok: boolean }>('PATCH', '/usuarios/me/senha', { senhaAtual, novaSenha }),
