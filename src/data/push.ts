@@ -27,6 +27,26 @@ function base64ParaUint8(base64: string): Uint8Array {
   return arr;
 }
 
+/**
+ * Pede ao navegador para tornar o storage PERSISTENTE (não despejável).
+ * Sem isso, o Android/iOS pode apagar o `localStorage` do PWA por pressão de
+ * espaço — e como o token de login fica lá, o colaborador cai no login de novo
+ * ("toda vez que volto tenho que logar"). Em PWA instalado + permissão de
+ * notificação concedida, os navegadores costumam CONCEDER. Idempotente e
+ * silencioso (navegador sem suporte simplesmente ignora).
+ */
+export async function solicitarStoragePersistente(): Promise<void> {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return;
+  try {
+    const st: StorageManager | undefined = navigator.storage;
+    if (!st?.persist || !st.persisted) return;
+    if (await st.persisted()) return; // já é persistente
+    await st.persist();
+  } catch {
+    /* sem suporte — segue (o token ainda fica em localStorage) */
+  }
+}
+
 export async function registrarPush(): Promise<void> {
   if (Platform.OS !== 'web' || !BASE || inscrito) return;
   if (

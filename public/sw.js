@@ -22,9 +22,15 @@ self.addEventListener('push', function (event) {
     body: data.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
+    // Tag agrupa por chamado/decisão (a nova substitui a anterior). renotify:true
+    // faz o Android RE-ALERTAR (som/vibração) mesmo ao substituir — sem isso, a
+    // 2ª notificação do mesmo chamado entra muda no Android.
     tag: data.tag || 'contato',
     renotify: true,
-    vibrate: [180, 80, 180],
+    // silent:false é explícito de propósito: garante que NÃO entre no modo
+    // silencioso (alguns navegadores tratam silent ausente de forma ambígua).
+    silent: false,
+    vibrate: [200, 100, 200, 100, 200],
     data: { url: data.url || '/' },
   };
   event.waitUntil(self.registration.showNotification(title, options));

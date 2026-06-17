@@ -64,6 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Só "carrega" (tela cheia) quando não há sessão em cache para mostrar.
   const [carregando, setCarregando] = useState<boolean>(apiAtiva && !carregarCache());
 
+  // Pede storage persistente assim que o app abre (web/PWA), para o navegador
+  // NÃO despejar o localStorage (onde fica o token) — evita o re-login diário.
+  useEffect(() => {
+    void import('@/data/push').then((m) => m.solicitarStoragePersistente());
+  }, []);
+
   useEffect(() => {
     if (!apiAtiva) return;
     // Sem token salvo não adianta validar — vai direto para o login.
