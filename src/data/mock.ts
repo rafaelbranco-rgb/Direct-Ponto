@@ -41,6 +41,12 @@ export const CATEGORIAS: Categoria[] = [
     descricao: 'Precisei sair no meio do expediente',
   },
   { codigo: 'BANCO_HORAS', label: 'Banco de Horas', icone: 'hourglass-outline', descricao: 'Compensação de horas' },
+  {
+    codigo: 'DUVIDAS',
+    label: 'Dúvidas',
+    icone: 'chatbubbles-outline',
+    descricao: 'Tire uma dúvida com o atendimento',
+  },
 ];
 
 export const SOLICITACOES: Solicitacao[] = [

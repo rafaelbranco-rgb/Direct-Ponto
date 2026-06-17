@@ -16,7 +16,8 @@ export type CategoriaCodigo =
   | 'SAIDA_ANTECIPADA'
   | 'ESQUECIMENTO'
   | 'SAIDA_EXPEDIENTE'
-  | 'BANCO_HORAS';
+  | 'BANCO_HORAS'
+  | 'DUVIDAS';
 
 export interface Categoria {
   codigo: CategoriaCodigo;

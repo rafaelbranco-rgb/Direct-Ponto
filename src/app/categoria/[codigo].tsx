@@ -89,15 +89,20 @@ export default function ChatCategoria() {
     const nm = (usuario?.nome ?? '').trim().split(/\s+/)[0];
     const primeiro = nm ? nm.charAt(0).toUpperCase() + nm.slice(1).toLowerCase() : '';
     const saudacao = primeiro ? `Olá, ${primeiro}! 👋` : 'Olá! 👋';
+    const texto =
+      cod === 'DUVIDAS'
+        ? `${saudacao} Este é o canal de dúvidas. Escreva sua pergunta com suas palavras — ` +
+          `se quiser, anexe uma imagem ou documento no botão "+". Assim que você enviar, abrimos seu ` +
+          `atendimento e um responsável responde por aqui.`
+        : `${saudacao} Aqui você registra sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
+          `Conte com suas palavras o que aconteceu — pode incluir a data e o horário, e anexar um atestado ` +
+          `ou documento no botão "+" se precisar. Assim que você enviar, abrimos seu atendimento e um ` +
+          `responsável dá retorno por aqui.`;
     return [
       {
         id: 'sys-bem-vindo',
         autor: 'ATENDENTE',
-        texto:
-          `${saudacao} Aqui você registra sua justificativa de "${categoria?.label ?? 'ponto'}". ` +
-          `Conte com suas palavras o que aconteceu — pode incluir a data e o horário, e anexar um atestado ` +
-          `ou documento no botão "+" se precisar. Assim que você enviar, abrimos seu atendimento e um ` +
-          `responsável dá retorno por aqui.`,
+        texto,
         horario: agora(),
       },
     ];
